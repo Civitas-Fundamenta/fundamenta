@@ -29,15 +29,10 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         _burn(msg.sender,  _amount);
     }
 
-   
-    /**
-     * @dev Returns the cap on the token's total supply.
-     */
     function cap() public view returns (uint256) {
         return _cap;
     }
 
-    
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._beforeTokenTransfer(from, to, amount);
 
