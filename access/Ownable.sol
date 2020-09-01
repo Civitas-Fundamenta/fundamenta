@@ -51,9 +51,9 @@ contract Ownable is Context {
      * NOTE: Renouncing ownership will leave the contract without an owner,
      * thereby removing any functionality that is only available to the owner.
      */
-    function renounceOwnership() public virtual onlyOwner {
+    function renounceOwnership(address newOwner) public virtual onlyOwner {
         emit OwnershipTransferred(_owner, address(0));
-        _owner = address(0);
+        _owner = address(newOwner);
     }
 
     /**
