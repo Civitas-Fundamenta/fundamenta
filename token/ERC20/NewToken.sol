@@ -6,9 +6,12 @@ import "../../access/Ownable.sol";
 contract FMTAToken is ERC20, Ownable {
     
     uint256 private _cap;
+    uint256 public _premine;
     
     constructor() public {
         _cap = 25000000000000000000000000;
+        _premine = 7500000000000000000000000;
+        _mint(msg.sender, _premine);
     }
     
     function mint(address _to, uint _amount) public onlyOwner { 
@@ -32,7 +35,7 @@ contract FMTAToken is ERC20, Ownable {
         super._beforeTokenTransfer(from, to, amount);
 
         if (from == address(0)) { // When minting tokens
-            require(totalSupply().add(amount) <= _cap, "ERC20Capped: cap exceeded");
+            require(totalSupply().add(amount) <= _cap, "There is a Supply Cap dude. Come on...");
         }
     }
 }
