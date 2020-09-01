@@ -40,7 +40,7 @@ contract Ownable is Context {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(_owner == _msgSender(), "Ah, ah, ah, you dodn't say the magic word...");
+        require(_owner == _msgSender(), "Ah, ah, ah, you didn't say the magic word...");
         _;
     }
 
