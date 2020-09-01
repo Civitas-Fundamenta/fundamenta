@@ -133,7 +133,7 @@ abstract contract AccessControl is Context {
      * - the caller must have ``role``'s admin role.
      */
     function grantRole(bytes32 role, address account) public virtual {
-        require(hasRole(_roles[role].adminRole, _msgSender()), "AccessControl: sender must be an admin to grant");
+        require(hasRole(_roles[role].adminRole, _msgSender()), "AccessControl: Ah ah ah, you must be Admin");
 
         _grantRole(role, account);
     }
@@ -148,7 +148,7 @@ abstract contract AccessControl is Context {
      * - the caller must have ``role``'s admin role.
      */
     function revokeRole(bytes32 role, address account) public virtual {
-        require(hasRole(_roles[role].adminRole, _msgSender()), "AccessControl: sender must be an admin to revoke");
+        require(hasRole(_roles[role].adminRole, _msgSender()), "AccessControl: Ah ah ah, you must be Admin");
 
         _revokeRole(role, account);
     }
