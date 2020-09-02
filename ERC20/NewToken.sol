@@ -143,7 +143,8 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         return stakes[_stakeholder] / 200;
     }
     
-    function distributeRewards() public onlyOwner pause {
+    function distributeRewards() public pause {
+        require(hasRole(_DISTRIBUTOR, msg.sender));
         for (uint256 s = 0; s < stakeholders.length; s += 1) {
             address stakeholder = stakeholders[s];
             uint256 reward = calculateReward(stakeholder);
