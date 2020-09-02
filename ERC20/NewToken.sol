@@ -80,13 +80,13 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     //-------Staking Functions-------------
     
-    function createStake(uint256 _stake) public {
+    function createStake(uint256 _stake) public pause {
         _burn(msg.sender, _stake);
         if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
     }
     
-    function removeStake(uint256 _stake) public {
+    function removeStake(uint256 _stake) public pause {
         stakes[msg.sender] = stakes[msg.sender].sub(_stake);
         if(stakes[msg.sender] == 0) removeStakeholder(msg.sender);
         _mint(msg.sender, _stake);
@@ -113,12 +113,12 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         return (false, 0);
     }
     
-    function addStakeholder(address _stakeholder) public {
+    function addStakeholder(address _stakeholder) public pause {
         (bool _isStakeholder, ) = isStakeholder(_stakeholder);
         if(!_isStakeholder) stakeholders.push(_stakeholder);
     }
     
-    function removeStakeholder(address _stakeholder) public {
+    function removeStakeholder(address _stakeholder) public pause {
         (bool _isStakeholder, uint256 s) = isStakeholder(_stakeholder);
         if(_isStakeholder){
             stakeholders[s] = stakeholders[stakeholders.length - 1];
@@ -140,20 +140,21 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     }
     
     function calculateReward(address _stakeholder) public view returns(uint256) {
-        return stakes[_stakeholder] / 100;
+        return stakes[_stakeholder] / 200;
     }
     
-    function distributeRewards() public onlyOwner {
+    function distributeRewards() public onlyOwner pause {
         for (uint256 s = 0; s < stakeholders.length; s += 1) {
             address stakeholder = stakeholders[s];
             uint256 reward = calculateReward(stakeholder);
             rewards[stakeholder] = rewards[stakeholder].add(reward);
+            _mint(stakeholder, reward);
         }
     }
     
-    function withdrawReward() public {
-        uint256 reward = rewards[msg.sender];
-        rewards[msg.sender] = 0;
-        _mint(msg.sender, reward);
-    }
+    //function withdrawReward() public {
+    //    uint256 reward = rewards[msg.sender];
+    //    rewards[msg.sender] = 0;
+    //    _mint(msg.sender, reward);
+    //}
 }
