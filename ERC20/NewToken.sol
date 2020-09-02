@@ -25,6 +25,16 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     uint256 public stakeCalc = 100;
     
+    bool public stakingOff;
+    
+    //--------Voting Vars Vars---------
+    
+    address[] internal voters;
+    
+    mapping(address => uint256) internal votes;
+    
+    bool public votingOff;
+    
     
     //------Token Constructor-----------
     
@@ -39,6 +49,20 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     modifier pause() {
         require(!paused, "Contract is Paused");
+        _;
+    }
+    
+    //------Staking Modifier--------------
+    
+    modifier stakeToggle() {
+        require(!stakingOff, "Staking is not currently active");
+        _;
+    }
+    
+    //------Voting Modifier--------------
+    
+    modifier voteToggle() {
+        require(!votingOff, "Voting is not currently active");
         _;
     }
     
@@ -82,13 +106,13 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     //-------Staking Functions-------------
     
-    function createStake(uint256 _stake) public pause {
+    function createStake(uint256 _stake) public pause stakeToggle {
         _burn(msg.sender, _stake);
         if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
     }
     
-    function removeStake(uint256 _stake) public pause {
+    function removeStake(uint256 _stake) public pause stakeToggle {
         stakes[msg.sender] = stakes[msg.sender].sub(_stake);
         if(stakes[msg.sender] == 0) removeStakeholder(msg.sender);
         _mint(msg.sender, _stake);
@@ -115,12 +139,12 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         return (false, 0);
     }
     
-    function addStakeholder(address _stakeholder) public pause {
+    function addStakeholder(address _stakeholder) public pause stakeToggle {
         (bool _isStakeholder, ) = isStakeholder(_stakeholder);
         if(!_isStakeholder) stakeholders.push(_stakeholder);
     }
     
-    function removeStakeholder(address _stakeholder) public pause {
+    function removeStakeholder(address _stakeholder) public pause stakeToggle {
         (bool _isStakeholder, uint256 s) = isStakeholder(_stakeholder);
         if(_isStakeholder){
             stakeholders[s] = stakeholders[stakeholders.length - 1];
@@ -149,7 +173,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         return stakes[_stakeholder] / stakeCalc;
     }
     
-    function distributeRewards() public pause {
+    function distributeRewards() public pause stakeToggle{
         require(hasRole(_DISTRIBUTOR, msg.sender));
         for (uint256 s = 0; s < stakeholders.length; s += 1) {
             address stakeholder = stakeholders[s];
@@ -159,9 +183,66 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         }
     }
     
+    function stakeOff(bool _stakingOff) public onlyOwner {
+        stakingOff = _stakingOff;
+    }
+    
     //function withdrawReward() public {
     //    uint256 reward = rewards[msg.sender];
     //    rewards[msg.sender] = 0;
     //    _mint(msg.sender, reward);
     //}
+    
+    
+    //--------Voting System----------
+    
+    function createVote(uint256 _vote) public voteToggle pause {
+        _burn(msg.sender, _vote);
+        if(votes[msg.sender] == 0) addVoter(msg.sender);
+        votes[msg.sender] = votes[msg.sender].add(_vote);
+    }
+    
+    function removeVote(uint256 _vote) public voteToggle pause {
+        votes[msg.sender] = votes[msg.sender].sub(_vote);
+        if(votes[msg.sender] == 0) removeVoter(msg.sender);
+        _mint(msg.sender, _vote);
+    }
+    
+    function voteOf (address _voter) public view returns(uint256) {
+        return votes[_voter];
+    }
+    
+    function totalVotes() public view returns(uint256) {
+        uint256 _totalVotes = 0;
+        for (uint256 s = 0; s < voters.length; s += 1) {
+            _totalVotes = _totalVotes.add(stakes[voters[s]]);
+        }
+        
+        return _totalVotes;
+    }
+    
+    function isVoter(address _address) public view returns(bool, uint256) {
+        for (uint256 s = 0; s < voters.length; s += 1) {
+            if (_address == voters[s]) return (true, s);
+        }
+        
+        return (false, 0);
+    }
+    
+    function addVoter(address _voter) public voteToggle pause {
+        (bool _isVoter, ) = isVoter(_voter);
+        if(!_isVoter) voters.push(_voter);
+    }
+    
+    function removeVoter(address _voter) public voteToggle pause {
+        (bool _isVoter, uint256 s) = isVoter(_voter);
+        if(_isVoter){
+            voters[s] = voters[voters.length - 1];
+            voters.pop();
+        }
+    }
+    
+    function voteOff(bool _votingOff) public onlyOwner {
+        votingOff = _votingOff;
+    }
 }
