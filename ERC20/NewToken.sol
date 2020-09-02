@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.6.0;
 
 import "./ERC20.sol";
@@ -13,6 +15,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     bytes32 public constant _MINTER = keccak256("_MINTER");
     bytes32 public constant _BURNER = keccak256("_BURNER");
     bytes32 public constant _DISTRIBUTOR = keccak256("_DISTRIBUTOR");
+    bytes32 public constant USER_ROLE = keccak256("USER");
     bool public paused;
     
     //-------Staking Vars---------
@@ -25,7 +28,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     uint256 public stakeCalc = 100;
     
-    bool public stakingOff;
+    bool public stakingOff = true;
     
     //--------Voting Vars Vars---------
     
@@ -33,16 +36,17 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     mapping(address => uint256) internal votes;
     
-    bool public votingOff;
+    bool public votingOff = true;
     
     
-    //------Token Constructor-----------
+    //------Token/Admin Constructor-----------
     
     constructor() public {
         _cap = 25000000000000000000000000;
         _premine = 7500000000000000000000000;
         _mint(msg.sender, _premine);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setRoleAdmin(USER_ROLE, DEFAULT_ADMIN_ROLE);
     }
     
     //------Token Modifier--------------
@@ -63,6 +67,18 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     modifier voteToggle() {
         require(!votingOff, "Voting is not currently active");
+        _;
+    }
+    
+    //-------Admin Modifiers-------------
+    
+       modifier onlyAdmin() {
+        require(isAdmin(msg.sender), "Restricted to admins.");
+        _;
+    }
+
+    modifier onlyUser() {
+        require(isUser(msg.sender), "Restricted to users.");
         _;
     }
     
@@ -245,4 +261,35 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     function voteOff(bool _votingOff) public onlyOwner {
         votingOff = _votingOff;
     }
+    
+    //--------Admin--------------------
+   
+    function isAdmin(address account) public virtual view returns (bool) {
+        return hasRole(DEFAULT_ADMIN_ROLE, account);
+    }
+
+    function isUser(address account) public virtual view returns (bool) {
+        return hasRole(USER_ROLE, account);
+    }
+
+    function addUser(address account) public virtual onlyAdmin {
+        grantRole(USER_ROLE, account);
+    }
+
+    function addAdmin(address account) public virtual onlyAdmin {
+        grantRole(DEFAULT_ADMIN_ROLE, account);
+    }
+
+    function removeUser(address account) public virtual onlyAdmin {
+        revokeRole(USER_ROLE, account);
+    }
+
+    function renounceAdmin() public virtual {
+        renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
 }
+
+
+
+   
+
