@@ -23,6 +23,8 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     mapping(address => uint256) internal rewards;
     
+    uint256 public stakeCalc = 100;
+    
     
     //------Token Constructor-----------
     
@@ -139,8 +141,12 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         return _totalRewards;
     }
     
+    function setStakeCalc(uint _stakeCalc) public onlyOwner pause {
+        stakeCalc = _stakeCalc;
+    }
+    
     function calculateReward(address _stakeholder) public view returns(uint256) {
-        return stakes[_stakeholder] / 200;
+        return stakes[_stakeholder] / stakeCalc;
     }
     
     function distributeRewards() public pause {
