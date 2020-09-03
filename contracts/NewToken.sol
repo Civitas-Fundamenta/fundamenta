@@ -10,7 +10,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
    //------Token Vars-------------
    
-    uint256 private _cap;
+    uint256 private _cap = 5e25;
     uint256 public _premine;
     bytes32 public constant _MINTER = keccak256("_MINTER");
     bytes32 public constant _BURNER = keccak256("_BURNER");
@@ -37,7 +37,6 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     //------Token/Admin Constructor-----------
     
     constructor() public {
-        _cap = 5e25;
         _premine = 7.5e24;
         _mint(msg.sender, _premine);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -78,6 +77,11 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     }
     
     //------Token Functions--------------
+    
+    function setSupplyCap(uint _supplyCap) public onlyOwner pause {
+        _cap = _supplyCap;
+    }
+    
     
     function mintTo(address _to, uint _amount) public pause {
         require(hasRole(_MINTER, msg.sender));
