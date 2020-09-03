@@ -21,29 +21,24 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     //-------Staking Vars---------
     
     address[] internal stakeholders;
-    
     mapping(address => uint256) internal stakes;
-    
     mapping(address => uint256) internal rewards;
-    
     uint256 public stakeCalc = 1000;
-    
+    uint256 public stakeCap = 3e22;
     bool public stakingOff = true;
     
     //--------Voting Vars Vars---------
     
     address[] internal voters;
-    
     mapping(address => uint256) internal votes;
-    
     bool public votingOff = true;
     
     
     //------Token/Admin Constructor-----------
     
     constructor() public {
-        _cap = 25000000000000000000000000;
-        _premine = 7500000000000000000000000;
+        _cap = 5e25;
+        _premine = 7.5e24;
         _mint(msg.sender, _premine);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setRoleAdmin(USER_ROLE, DEFAULT_ADMIN_ROLE);
@@ -125,7 +120,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     function createStake(uint256 _stake) public pause stakeToggle {
         if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
-        require(stakes[msg.sender] <= 3e22, "Stake Cap is 30K");
+        require(stakes[msg.sender] <= stakeCap, "Cannot stake more than allowed");
         _burn(msg.sender, _stake);
     }
     
@@ -186,6 +181,10 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         stakeCalc = _stakeCalc;
     }
     
+    function setStakeCap(uint _stakeCap) public onlyOwner pause {
+        stakeCap = _stakeCap;
+    }
+    
     function calculateReward(address _stakeholder) public view returns(uint256) {
         return stakes[_stakeholder] / stakeCalc;
     }
@@ -203,13 +202,6 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     function stakeOff(bool _stakingOff) public onlyOwner {
         stakingOff = _stakingOff;
     }
-    
-    //function withdrawReward() public {
-    //    uint256 reward = rewards[msg.sender];
-    //    rewards[msg.sender] = 0;
-    //    _mint(msg.sender, reward);
-    //}
-    
     
     //--------Voting System----------
     
