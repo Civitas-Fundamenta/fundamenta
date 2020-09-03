@@ -26,7 +26,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     mapping(address => uint256) internal rewards;
     
-    uint256 public stakeCalc = 100;
+    uint256 public stakeCalc = 1000;
     
     bool public stakingOff = true;
     
@@ -123,9 +123,10 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     //-------Staking Functions-------------
     
     function createStake(uint256 _stake) public pause stakeToggle {
-        _burn(msg.sender, _stake);
         if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
+        require(stakes[msg.sender] <= 3e22, "Stake Cap is 30K");
+        _burn(msg.sender, _stake);
     }
     
     function removeStake(uint256 _stake) public pause stakeToggle {
