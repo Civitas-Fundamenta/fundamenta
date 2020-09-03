@@ -18,7 +18,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     bytes32 public constant USER_ROLE = keccak256("USER");
     bool public paused;
     
-    //-------Staking Vars---------
+    //-------Staking Vars-------------------
     
     address[] internal stakeholders;
     mapping(address => uint256) internal stakes;
@@ -27,14 +27,14 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     uint256 public stakeCap = 3e22;
     bool public stakingOff = true;
     
-    //--------Voting Vars Vars---------
+    //--------Voting Vars-------------------
     
     address[] internal voters;
     mapping(address => uint256) internal votes;
     bool public votingOff = true;
     
     
-    //------Token/Admin Constructor-----------
+    //------Token/Admin Constructor---------
     
     constructor() public {
         _premine = 7.5e24;
@@ -43,28 +43,28 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         _setRoleAdmin(USER_ROLE, DEFAULT_ADMIN_ROLE);
     }
     
-    //------Token Modifier--------------
+    //------Token Modifier------------------
     
     modifier pause() {
         require(!paused, "Contract is Paused");
         _;
     }
     
-    //------Staking Modifier--------------
+    //------Staking Modifier----------------
     
     modifier stakeToggle() {
         require(!stakingOff, "Staking is not currently active");
         _;
     }
     
-    //------Voting Modifier--------------
+    //------Voting Modifier-----------------
     
     modifier voteToggle() {
         require(!votingOff, "Voting is not currently active");
         _;
     }
     
-    //-------Admin Modifiers-------------
+    //-------Admin Modifiers----------------
     
        modifier onlyAdmin() {
         require(isAdmin(msg.sender), "Restricted to admins.");
@@ -76,12 +76,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         _;
     }
     
-    //------Token Functions--------------
-    
-    function setSupplyCap(uint _supplyCap) public onlyOwner pause {
-        _cap = _supplyCap;
-    }
-    
+    //------Token Functions-----------------
     
     function mintTo(address _to, uint _amount) public pause {
         require(hasRole(_MINTER, msg.sender));
@@ -103,6 +98,12 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         _burn(_from, _amount);
     }
 
+    //----------Supply Cap------------------
+
+    function setSupplyCap(uint _supplyCap) public onlyOwner pause {
+        _cap = _supplyCap;
+    }
+    
     function supplyCap() public view returns (uint256) {
         return _cap;
     }
@@ -119,7 +120,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         paused = _paused;
     }
     
-    //-------Staking Functions-------------
+    //-------Staking Functions--------------
     
     function createStake(uint256 _stake) public pause stakeToggle {
         if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
@@ -207,7 +208,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         stakingOff = _stakingOff;
     }
     
-    //--------Voting System----------
+    //--------Voting System-----------------------
     
     function createVote(uint256 _vote) public voteToggle pause {
         _burn(msg.sender, _vote);
@@ -259,7 +260,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         votingOff = _votingOff;
     }
     
-    //--------Admin--------------------
+    //--------Admin---------------------------
    
     function isAdmin(address account) public virtual view returns (bool) {
         return hasRole(DEFAULT_ADMIN_ROLE, account);
