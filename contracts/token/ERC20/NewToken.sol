@@ -286,7 +286,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         grantRole(USER_ROLE, account);
     }
 
-    function addAdmin(address account) public virtual onlyAdmin {
+    function addAdmin(address account) public virtual onlyOwner {
         grantRole(DEFAULT_ADMIN_ROLE, account);
     }
     
