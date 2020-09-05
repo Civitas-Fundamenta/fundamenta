@@ -5,7 +5,6 @@ pragma solidity ^0.6.0;
 import "../utils/EnumerableSet.sol";
 import "../utils/Address.sol";
 import "../GSN/Context.sol";
-import "./Ownable.sol";
 
 /**
  * @dev Contract module that allows children to implement role-based access
@@ -42,7 +41,7 @@ import "./Ownable.sol";
  * grant and revoke this role. Extra precautions should be taken to secure
  * accounts that have been granted it.
  */
-abstract contract AccessControl is Context, Ownable {
+abstract contract AccessControl is Context {
     using EnumerableSet for EnumerableSet.AddressSet;
     using Address for address;
 
@@ -133,7 +132,7 @@ abstract contract AccessControl is Context, Ownable {
      *
      * - the caller must have ``role``'s admin role.
      */
-    function grantRole(bytes32 role, address account) public virtual onlyOwner {
+    function grantRole(bytes32 role, address account) public virtual {
         require(hasRole(_roles[role].adminRole, _msgSender()), "AccessControl: sender must be an admin to grant");
 
         _grantRole(role, account);
@@ -148,7 +147,7 @@ abstract contract AccessControl is Context, Ownable {
      *
      * - the caller must have ``role``'s admin role.
      */
-    function revokeRole(bytes32 role, address account) public virtual onlyOwner {
+    function revokeRole(bytes32 role, address account) public virtual {
         require(hasRole(_roles[role].adminRole, _msgSender()), "AccessControl: sender must be an admin to revoke");
 
         _revokeRole(role, account);

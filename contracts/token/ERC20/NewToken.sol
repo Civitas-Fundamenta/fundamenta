@@ -67,18 +67,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         _;
     }
     
-    //-------Admin Modifiers----------------
-    
-       modifier onlyAdmin() {
-        require(isAdmin(msg.sender), "Restricted to admins.");
-        _;
-    }
-
-    modifier onlyUser() {
-        require(isUser(msg.sender), "Restricted to users.");
-        _;
-    }
-    
+   
     //------Token Functions-----------------
     
     function mintTo(address _to, uint _amount) public pause {
@@ -272,35 +261,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         votingOff = _votingOff;
     }
     
-    //--------Admin---------------------------
-   
-    function isAdmin(address account) public virtual view returns (bool) {
-        return hasRole(DEFAULT_ADMIN_ROLE, account);
-    }
-
-    function isUser(address account) public virtual view returns (bool) {
-        return hasRole(USER_ROLE, account);
-    }
-
-    function addUser(address account) public virtual onlyAdmin {
-        grantRole(USER_ROLE, account);
-    }
-
-    function addAdmin(address account) public virtual onlyAdmin {
-        grantRole(DEFAULT_ADMIN_ROLE, account);
-    }
     
-    function removeAdmin(address account) public virtual onlyOwner {
-        revokeRole(DEFAULT_ADMIN_ROLE, account);
-    }
-
-    function removeUser(address account) public virtual onlyAdmin {
-        revokeRole(USER_ROLE, account);
-    }
-
-    function renounceAdmin() public virtual {
-        renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    }
 }
 
 
