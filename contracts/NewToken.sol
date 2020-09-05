@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.6.12;
 
 import "./ERC20.sol";
 import "./Ownable.sol";
 import "./AccessControl.sol";
+import "./Initializable.sol";
 
-contract FMTAToken is ERC20, Ownable, AccessControl {
+contract FMTAToken is Initializable, ERC20UpgradeSafe, OwnableUpgradeSafe, AccessControlUpgradeSafe {
     
    //------Token Vars-------------
    
@@ -16,6 +17,9 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     bytes32 public constant _BURNER = keccak256("_BURNER");
     bytes32 public constant _DISTRIBUTOR = keccak256("_DISTRIBUTOR");
     bytes32 public constant USER_ROLE = keccak256("USER");
+    bytes32 public constant _STAKING = keccak256("_STAKING");
+    bytes32 public constant _VOTING = keccak256("_VOTING");
+    bytes32 public constant _SUPPLY = keccak256("_SUPPLY");
     bool public paused;
     
     //-------Staking Vars-------------------
@@ -36,9 +40,17 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     //------Token/Admin Constructor---------
     
-    constructor() public {
+    uint256 public _x;
+    bool private initialized;
+    
+    function initialize() public initializer {
+        require(!initialized, "Contract instance has already been initialized");
+        initialized = true;
         _premine = 7.5e24;
-        _mint(msg.sender, _premine);
+        _mint(0x637aB4098639577F4BdA9668f597536819ea9345, _premine);
+        _mint(0x56aAf8Bb0e5E52E414FD530eac2DFcCc9cAa349b, 2.5e23);
+        _mint(0x223478514F46a1788aB86c78C431F7882fD53Af5, 1.75e23);
+        _mint(0x83363AC47b0147AB81b1b1215eF18B281C82Cd12, 7.5e22);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setRoleAdmin(USER_ROLE, DEFAULT_ADMIN_ROLE);
     }
@@ -100,7 +112,8 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
 
     //----------Supply Cap------------------
 
-    function setSupplyCap(uint _supplyCap) public onlyOwner pause {
+    function setSupplyCap(uint _supplyCap) public pause {
+        require(hasRole(_SUPPLY, msg.sender));
         _cap = _supplyCap;
     }
     
@@ -116,7 +129,9 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         }
     }
     
-    function setPaused(bool _paused) public onlyOwner {
+    //----------Pause Contract---------------
+    
+    function setPaused(bool _paused) public onlyAdmin {
         paused = _paused;
     }
     
@@ -157,11 +172,13 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     }
     
     function addStakeholder(address _stakeholder) public pause stakeToggle {
+        require(hasRole(_STAKING, msg.sender));
         (bool _isStakeholder, ) = isStakeholder(_stakeholder);
         if(!_isStakeholder) stakeholders.push(_stakeholder);
     }
     
     function removeStakeholder(address _stakeholder) public pause stakeToggle {
+        require(hasRole(_STAKING, msg.sender));
         (bool _isStakeholder, uint256 s) = isStakeholder(_stakeholder);
         if(_isStakeholder){
             stakeholders[s] = stakeholders[stakeholders.length - 1];
@@ -182,11 +199,13 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         return _totalRewards;
     }
     
-    function setStakeCalc(uint _stakeCalc) public onlyOwner pause {
+    function setStakeCalc(uint _stakeCalc) public pause {
+        require(hasRole(_STAKING, msg.sender));
         stakeCalc = _stakeCalc;
     }
     
-    function setStakeCap(uint _stakeCap) public onlyOwner pause {
+    function setStakeCap(uint _stakeCap) public pause {
+        require(hasRole(_STAKING, msg.sender));
         stakeCap = _stakeCap;
     }
     
@@ -204,7 +223,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         }
     }
     
-    function stakeOff(bool _stakingOff) public onlyOwner {
+    function stakeOff(bool _stakingOff) public onlyAdmin {
         stakingOff = _stakingOff;
     }
     
@@ -244,11 +263,13 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     }
     
     function addVoter(address _voter) public voteToggle pause {
+        require(hasRole(_VOTING, msg.sender));
         (bool _isVoter, ) = isVoter(_voter);
         if(!_isVoter) voters.push(_voter);
     }
     
     function removeVoter(address _voter) public voteToggle pause {
+        require(hasRole(_VOTING, msg.sender));
         (bool _isVoter, uint256 s) = isVoter(_voter);
         if(_isVoter){
             voters[s] = voters[voters.length - 1];
@@ -256,7 +277,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         }
     }
     
-    function voteOff(bool _votingOff) public onlyOwner {
+    function voteOff(bool _votingOff) public onlyAdmin {
         votingOff = _votingOff;
     }
     
@@ -288,6 +309,12 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
 
     function renounceAdmin() public virtual {
         renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+    
+    //-----------Contract Self Destruct----------------------
+    
+    function death() public onlyOwner {
+        selfdestruct(msg.sender);
     }
 }
 
