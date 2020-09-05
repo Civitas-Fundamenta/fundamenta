@@ -3,10 +3,10 @@
 pragma solidity ^0.6.12;
 
 import "./ERC20.sol";
-import "./AccessControl.sol";
+import "./EnumerableSet.sol";
 import "./Initializable.sol";
 
-contract FMTAToken is Initializable, ERC20UpgradeSafe, AccessControlUpgradeSafe {
+contract FMTAToken is Initializable, ERC20UpgradeSafe{
     
    //------Token Vars-------------
    
@@ -20,6 +20,7 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe, AccessControlUpgradeSafe 
     bytes32 public constant _VOTING = keccak256("_VOTING");
     bytes32 public constant _SUPPLY = keccak256("_SUPPLY");
     bytes32 public constant _KILLER = keccak256("_KILLER");
+    bytes32 public constant _GOD = keccak256("_GOD");
     bool public paused;
     
     //-------Staking Vars-------------------
@@ -37,6 +38,92 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe, AccessControlUpgradeSafe 
     mapping(address => uint256) internal votes;
     bool public votingOff = true;
     
+    //--------Acesss Control-----------------
+    
+    function __AccessControl_init() internal initializer {
+        __Context_init_unchained();
+        __AccessControl_init_unchained();
+    }
+
+    function __AccessControl_init_unchained() internal initializer {
+
+
+    }
+
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using Address for address;
+
+    struct RoleData {
+        EnumerableSet.AddressSet members;
+        bytes32 adminRole;
+    }
+
+    mapping (bytes32 => RoleData) private _roles;
+
+    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
+
+    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
+
+    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
+
+    function hasRole(bytes32 role, address account) public view returns (bool) {
+        return _roles[role].members.contains(account);
+    }
+
+    function getRoleMemberCount(bytes32 role) public view returns (uint256) {
+        return _roles[role].members.length();
+    }
+
+    function getRoleMember(bytes32 role, uint256 index) public view returns (address) {
+        return _roles[role].members.at(index);
+    }
+
+    function getRoleAdmin(bytes32 role) public view returns (bytes32) {
+        return _roles[role].adminRole;
+    }
+
+    function grantRole(bytes32 role, address account) public virtual {
+        require(hasRole(_GOD, msg.sender), "Only A God can do this");
+        require(hasRole(_roles[role].adminRole, _msgSender()), "AccessControl: sender must be an admin to grant");
+
+        _grantRole(role, account);
+    }
+
+    function revokeRole(bytes32 role, address account) public virtual {
+        require(hasRole(_GOD, msg.sender), "Only A God can do this");
+        require(hasRole(_roles[role].adminRole, _msgSender()), "AccessControl: sender must be an admin to revoke");
+
+        _revokeRole(role, account);
+    }
+
+    function renounceRole(bytes32 role, address account) public virtual {
+        require(account == _msgSender(), "AccessControl: can only renounce roles for self");
+
+        _revokeRole(role, account);
+    }
+
+    function _setupRole(bytes32 role, address account) internal virtual {
+        _grantRole(role, account);
+    }
+
+    function _setRoleAdmin(bytes32 role, bytes32 adminRole) internal virtual {
+        _roles[role].adminRole = adminRole;
+    }
+
+    function _grantRole(bytes32 role, address account) private {
+        if (_roles[role].members.add(account)) {
+            emit RoleGranted(role, account, _msgSender());
+        }
+    }
+
+    function _revokeRole(bytes32 role, address account) private {
+        if (_roles[role].members.remove(account)) {
+            emit RoleRevoked(role, account, _msgSender());
+        }
+    }
+
+    uint256[49] private __gap;
+    
     
     //------Token/Admin Constructor---------
     
@@ -51,6 +138,7 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe, AccessControlUpgradeSafe 
         _mint(0x223478514F46a1788aB86c78C431F7882fD53Af5, 1.75e23);
         _mint(0x83363AC47b0147AB81b1b1215eF18B281C82Cd12, 7.5e22);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(_GOD, msg.sender);
         _setRoleAdmin(USER_ROLE, DEFAULT_ADMIN_ROLE);
     }
     
@@ -295,10 +383,12 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe, AccessControlUpgradeSafe 
     }
 
     function addAdmin(address account) public virtual onlyAdmin {
+        require(hasRole(_GOD, msg.sender), "Only A God can do this");
         grantRole(DEFAULT_ADMIN_ROLE, account);
     }
     
     function removeAdmin(address account) public virtual onlyAdmin {
+        require(hasRole(_GOD, msg.sender), "Only A God can do this");
         revokeRole(DEFAULT_ADMIN_ROLE, account);
     }
 
