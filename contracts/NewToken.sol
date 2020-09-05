@@ -3,11 +3,11 @@
 pragma solidity ^0.6.12;
 
 import "./ERC20.sol";
-import "./Ownable.sol";
+//import "./Ownable.sol";
 import "./AccessControl.sol";
 import "./Initializable.sol";
 
-contract FMTAToken is Initializable, ERC20UpgradeSafe, OwnableUpgradeSafe, AccessControlUpgradeSafe {
+contract FMTAToken is Initializable, ERC20UpgradeSafe, AccessControlUpgradeSafe {
     
    //------Token Vars-------------
    
@@ -20,6 +20,7 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe, OwnableUpgradeSafe, Acces
     bytes32 public constant _STAKING = keccak256("_STAKING");
     bytes32 public constant _VOTING = keccak256("_VOTING");
     bytes32 public constant _SUPPLY = keccak256("_SUPPLY");
+    bytes32 public constant _KILLER = keccak256("_KILLER");
     bool public paused;
     
     //-------Staking Vars-------------------
@@ -40,7 +41,6 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe, OwnableUpgradeSafe, Acces
     
     //------Token/Admin Constructor---------
     
-    uint256 public _x;
     bool private initialized;
     
     function initialize() public initializer {
@@ -299,7 +299,7 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe, OwnableUpgradeSafe, Acces
         grantRole(DEFAULT_ADMIN_ROLE, account);
     }
     
-    function removeAdmin(address account) public virtual onlyOwner {
+    function removeAdmin(address account) public virtual onlyAdmin {
         revokeRole(DEFAULT_ADMIN_ROLE, account);
     }
 
@@ -313,7 +313,8 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe, OwnableUpgradeSafe, Acces
     
     //-----------Contract Self Destruct----------------------
     
-    function death() public onlyOwner {
+    function death() public {
+        require(hasRole(_KILLER, msg.sender),"You do not possess the right weapon to vanquish this beast");
         selfdestruct(msg.sender);
     }
 }
