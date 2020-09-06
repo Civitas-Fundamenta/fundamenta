@@ -54,8 +54,8 @@ contract ERC20 is Context, IERC20 {
      * construction.
      */
     constructor () public {
-        _name = "Fundamenta";
-        _symbol = "FMTA";
+        _name = "TESTT";
+        _symbol = "TEST";
         _decimals = 18;
      
     }
