@@ -2,10 +2,10 @@
 
 pragma solidity ^0.6.0;
 
-import "../../GSN/Context.sol";
+import "./Context.sol";
 import "./IERC20.sol";
-import "../../math/SafeMath.sol";
-import "../../utils/Address.sol";
+import "./SafeMath.sol";
+import "./Address.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -40,6 +40,7 @@ contract ERC20 is Context, IERC20 {
     mapping (address => mapping (address => uint256)) private _allowances;
 
     uint256 private _totalSupply;
+
     string private _name;
     string private _symbol;
     uint8 private _decimals;
@@ -53,11 +54,10 @@ contract ERC20 is Context, IERC20 {
      * All three of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor () public {
-        _name = "TESTT";
-        _symbol = "TEST";
+    constructor (string memory name, string memory symbol) public {
+        _name = name;
+        _symbol = symbol;
         _decimals = 18;
-     
     }
 
     /**
