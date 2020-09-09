@@ -20,7 +20,7 @@ contract TESTToken is ERC20, Ownable, AccessControl {
    //------Token Vars----------------------
    
     uint256 private _cap;
-    uint256 public _premine;
+    uint256 public _fundingEmission;
     
     //-------Toggle Vars--------------------
     
@@ -49,7 +49,7 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     //------Token/Admin Constructor---------
     
     constructor() public ERC20("TEST", "TEST") {
-        _premine = 7.5e24;
+        _fundingEmission = 7.5e24;
         _cap = 5e25;
         stakingOff = true;
         votingOff = true;
@@ -57,7 +57,7 @@ contract TESTToken is ERC20, Ownable, AccessControl {
         mintToDisabled = true;
         stakeCalc = 1000;
         stakeCap = 3e22;
-        _mint(msg.sender, _premine);
+        _mint(msg.sender, _fundingEmission);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
     
@@ -247,58 +247,6 @@ contract TESTToken is ERC20, Ownable, AccessControl {
             uint256 reward = calculateReward(stakeholder);
             rewards[stakeholder] = rewards[stakeholder].add(reward);
             _mint(stakeholder, reward);
-        }
-    }
-    
-    //--------Voting Functions-----------------------
-    
-    function createVote(uint256 _vote, address _voter) public voteToggle pause {
-        require(hasRole(_VOTING, msg.sender));
-        _burn(_voter, _vote);
-        if(votes[_voter] == 0) addVoter(_voter);
-        votes[_voter] = votes[_voter].add(_vote);
-    }
-    
-    function removeVote(uint256 _vote, address _voter ) public voteToggle pause {
-        require(hasRole(_VOTING, msg.sender));
-        votes[_voter] = votes[_voter].sub(_vote);
-        if(votes[_voter] == 0) removeVoter(_voter);
-        _mint(_voter, _vote);
-    }
-    
-    function voteOf (address _voter) public view returns(uint256) {
-        return votes[_voter];
-    }
-    
-    function totalVotes() public view returns(uint256) {
-        uint256 _totalVotes = 0;
-        for (uint256 s = 0; s < voters.length; s += 1) {
-            _totalVotes = _totalVotes.add(stakes[voters[s]]);
-        }
-        
-        return _totalVotes;
-    }
-    
-    function isVoter(address _address) public view returns(bool, uint256) {
-        for (uint256 s = 0; s < voters.length; s += 1) {
-            if (_address == voters[s]) return (true, s);
-        }
-        
-        return (false, 0);
-    }
-    
-    function addVoter(address _voter) public voteToggle pause {
-        require(hasRole(_VOTING, msg.sender));
-        (bool _isVoter, ) = isVoter(_voter);
-        if(!_isVoter) voters.push(_voter);
-    }
-    
-    function removeVoter(address _voter) public voteToggle pause {
-        require(hasRole(_VOTING, msg.sender));
-        (bool _isVoter, uint256 s) = isVoter(_voter);
-        if(_isVoter){
-            voters[s] = voters[voters.length - 1];
-            voters.pop();
         }
     }
     
