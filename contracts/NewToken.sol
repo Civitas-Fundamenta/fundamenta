@@ -147,17 +147,19 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     
     //-------Staking Functions--------------
     
-    function createStake(uint256 _stake) public pause stakeToggle {
-        if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
-        stakes[msg.sender] = stakes[msg.sender].add(_stake);
-        require(stakes[msg.sender] <= stakeCap, "Cannot stake more than allowed");
-        _burn(msg.sender, _stake);
+    function createStake(uint256 _stake, address _staker) public pause stakeToggle {
+        require(hasRole(_STAKING, msg.sender));
+        if(stakes[_staker] == 0) addStakeholder(_staker);
+        stakes[_staker] = stakes[_staker].add(_stake);
+        require(stakes[_staker] <= stakeCap, "Cannot stake more than allowed");
+        _burn(_staker, _stake);
     }
     
-    function removeStake(uint256 _stake) public pause stakeToggle {
-        stakes[msg.sender] = stakes[msg.sender].sub(_stake);
-        if(stakes[msg.sender] == 0) removeStakeholder(msg.sender);
-        _mint(msg.sender, _stake);
+    function removeStake(uint256 _stake, address _staker) public pause stakeToggle {
+        require(hasRole(_STAKING, msg.sender));
+        stakes[_staker] = stakes[_staker].sub(_stake);
+        if(stakes[_staker] == 0) removeStakeholder(_staker);
+        _mint(_staker, _stake);
     }
     
     function stakeOf (address _stakeholder) public view returns(uint256) {
