@@ -8,35 +8,43 @@ import "./AccessControl.sol";
 
 contract TESTToken is ERC20, Ownable, AccessControl {
     
-   //------Token Vars-------------
+   //------RBAC Vars--------------
    
-    uint256 private _cap;
-    uint256 public _premine;
     bytes32 public constant _MINTER = keccak256("_MINTER");
     bytes32 public constant _BURNER = keccak256("_BURNER");
     bytes32 public constant _DISTRIBUTOR = keccak256("_DISTRIBUTOR");
     bytes32 public constant _STAKING = keccak256("_STAKING");
     bytes32 public constant _VOTING = keccak256("_VOTING");
     bytes32 public constant _SUPPLY = keccak256("_SUPPLY");
+   
+   //------Token Vars----------------------
+   
+    uint256 private _cap;
+    uint256 public _premine;
+    
+    //-------Toggle Vars--------------------
+    
     bool public paused;
     bool public mintDisabled;
     bool public mintToDisabled;
+    bool public stakingOff;
+    bool public votingOff;
     
     //-------Staking Vars-------------------
     
+    uint256 public stakeCalc;
+    uint256 public stakeCap;
+    
+    //--------Staking mapping/Arrays----------
+
     address[] internal stakeholders;
     mapping(address => uint256) internal stakes;
     mapping(address => uint256) internal rewards;
-    uint256 public stakeCalc;
-    uint256 public stakeCap;
-    bool public stakingOff;
     
-    //--------Voting Vars-------------------
+    //--------Voting mapping/Arrays----------
     
     address[] internal voters;
     mapping(address => uint256) internal votes;
-    bool public votingOff;
-    
     
     //------Token/Admin Constructor---------
     
@@ -53,35 +61,22 @@ contract TESTToken is ERC20, Ownable, AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
     
-    //------Token Modifier------------------
+    //------Toggle Modifiers------------------
     
     modifier pause() {
         require(!paused, "Contract is Paused");
         _;
     }
     
-    //------Staking Modifier----------------
-    
     modifier stakeToggle() {
         require(!stakingOff, "Staking is not currently active");
         _;
     }
     
-    //------Voting Modifier-----------------
-    
     modifier voteToggle() {
         require(!votingOff, "Voting is not currently active");
         _;
     }
-    
-    //-------Admin Modifiers----------------
-    
-       modifier onlyAdmin() {
-        require(isAdmin(msg.sender), "Restricted to admins");
-        _;
-    }
-    
-    //-------Minting Modifiers--------------
     
     modifier mintDis() {
         require(!mintDisabled, "Minting is currently disabled");
@@ -90,6 +85,13 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     
     modifier mintToDis() {
         require(!mintToDisabled, "Minting to addresses is curently disabled");
+        _;
+    }
+    
+    //-------Admin Modifier----------------
+    
+       modifier onlyAdmin() {
+        require(isAdmin(msg.sender), "Restricted to admins");
         _;
     }
     
