@@ -6,85 +6,91 @@ import "./ERC20.sol";
 import "./Ownable.sol";
 import "./AccessControl.sol";
 
-contract FMTAToken is ERC20, Ownable, AccessControl {
+contract TESTToken is ERC20, Ownable, AccessControl {
     
-   //------Token Vars-------------
+   //------RBAC Vars--------------
    
-    uint256 private _cap;
-    uint256 public _premine;
     bytes32 public constant _MINTER = keccak256("_MINTER");
     bytes32 public constant _BURNER = keccak256("_BURNER");
     bytes32 public constant _DISTRIBUTOR = keccak256("_DISTRIBUTOR");
     bytes32 public constant _STAKING = keccak256("_STAKING");
     bytes32 public constant _VOTING = keccak256("_VOTING");
     bytes32 public constant _SUPPLY = keccak256("_SUPPLY");
-    bool public paused;
+   
+   //------Token Vars----------------------
+   
+    uint256 private _cap;
+    uint256 public _fundingEmission;
     
+    //-------Toggle Vars--------------------
+    
+    bool public paused;
+    bool public mintDisabled;
+    bool public mintToDisabled;
+    bool public stakingOff;
+   
     //-------Staking Vars-------------------
     
+    uint256 public stakeCalc;
+    uint256 public stakeCap;
+    
+    //--------Staking mapping/Arrays----------
+
     address[] internal stakeholders;
     mapping(address => uint256) internal stakes;
     mapping(address => uint256) internal rewards;
-    uint256 public stakeCalc;
-    uint256 public stakeCap;
-    bool public stakingOff;
-    
-    //--------Voting Vars-------------------
-    
-    address[] internal voters;
-    mapping(address => uint256) internal votes;
-    bool public votingOff;
-    
     
     //------Token/Admin Constructor---------
     
-    constructor() public ERC20("Fundamenta", "FMTA") {
-        _premine = 7.5e24;
+    constructor() public ERC20("TEST", "TEST") {
+        _fundingEmission = 7.5e24;
         _cap = 5e25;
         stakingOff = true;
-        votingOff = true;
+        mintDisabled = true;
+        mintToDisabled = true;
         stakeCalc = 1000;
         stakeCap = 3e22;
-        _mint(msg.sender, _premine);
+        _mint(msg.sender, _fundingEmission);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
     
-    //------Token Modifier------------------
+    //------Toggle Modifiers------------------
     
     modifier pause() {
         require(!paused, "Contract is Paused");
         _;
     }
     
-    //------Staking Modifier----------------
-    
     modifier stakeToggle() {
         require(!stakingOff, "Staking is not currently active");
         _;
     }
     
-    //------Voting Modifier-----------------
-    
-    modifier voteToggle() {
-        require(!votingOff, "Voting is not currently active");
+    modifier mintDis() {
+        require(!mintDisabled, "Minting is currently disabled");
         _;
     }
     
-    //-------Admin Modifiers----------------
+    modifier mintToDis() {
+        require(!mintToDisabled, "Minting to addresses is curently disabled");
+        _;
+    }
+    
+    //-------Admin Modifier----------------
     
        modifier onlyAdmin() {
-        require(isAdmin(msg.sender), "Restricted to admins.");
+        require(isAdmin(msg.sender), "Restricted to admins");
         _;
     }
     
     //------Token Functions-----------------
     
-    function mintTo(address _to, uint _amount) public pause {
+    function mintTo(address _to, uint _amount) public pause mintToDis{
         require(hasRole(_MINTER, msg.sender));
         _mint(_to, _amount);
     }
     
-    function mint( uint _amount) public pause {
+    function mint( uint _amount) public pause mintDis{
         require(hasRole(_MINTER, msg.sender));
         _mint(msg.sender, _amount);
     }
@@ -119,10 +125,24 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
         }
     }
     
-    //--------Pause Contract----------------
     
-      function setPaused(bool _paused) public onlyOwner {
+    //--------Toggle Functions----------------
+    
+    function setPaused(bool _paused) public onlyOwner {
         paused = _paused;
+    }
+    
+    function disableMint(bool _disableMinting) public onlyOwner {
+        mintDisabled = _disableMinting;
+    }
+    
+    function disableMintTo(bool _disableMintTo) public onlyOwner {
+        mintToDisabled = _disableMintTo;
+    }
+    
+    function stakeOff(bool _stakingOff) public {
+        require(hasRole(_STAKING, msg.sender));
+        stakingOff = _stakingOff;
     }
     
     //-------Staking Functions--------------
@@ -211,68 +231,6 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
             rewards[stakeholder] = rewards[stakeholder].add(reward);
             _mint(stakeholder, reward);
         }
-    }
-    
-    function stakeOff(bool _stakingOff) public {
-        require(hasRole(_STAKING, msg.sender));
-        stakingOff = _stakingOff;
-    }
-    
-    //--------Voting Functions-----------------------
-    
-    function createVote(uint256 _vote, address _voter) public voteToggle pause {
-        require(hasRole(_VOTING, msg.sender));
-        _burn(_voter, _vote);
-        if(votes[_voter] == 0) addVoter(_voter);
-        votes[_voter] = votes[_voter].add(_vote);
-    }
-    
-    function removeVote(uint256 _vote, address _voter ) public voteToggle pause {
-        require(hasRole(_VOTING, msg.sender));
-        votes[_voter] = votes[_voter].sub(_vote);
-        if(votes[_voter] == 0) removeVoter(_voter);
-        _mint(_voter, _vote);
-    }
-    
-    function voteOf (address _voter) public view returns(uint256) {
-        return votes[_voter];
-    }
-    
-    function totalVotes() public view returns(uint256) {
-        uint256 _totalVotes = 0;
-        for (uint256 s = 0; s < voters.length; s += 1) {
-            _totalVotes = _totalVotes.add(stakes[voters[s]]);
-        }
-        
-        return _totalVotes;
-    }
-    
-    function isVoter(address _address) public view returns(bool, uint256) {
-        for (uint256 s = 0; s < voters.length; s += 1) {
-            if (_address == voters[s]) return (true, s);
-        }
-        
-        return (false, 0);
-    }
-    
-    function addVoter(address _voter) public voteToggle pause {
-        require(hasRole(_VOTING, msg.sender));
-        (bool _isVoter, ) = isVoter(_voter);
-        if(!_isVoter) voters.push(_voter);
-    }
-    
-    function removeVoter(address _voter) public voteToggle pause {
-        require(hasRole(_VOTING, msg.sender));
-        (bool _isVoter, uint256 s) = isVoter(_voter);
-        if(_isVoter){
-            voters[s] = voters[voters.length - 1];
-            voters.pop();
-        }
-    }
-    
-    function voteOff(bool _votingOff) public {
-        require(hasRole(_VOTING, msg.sender));
-        votingOff = _votingOff;
     }
     
     //--------Admin---------------------------
