@@ -28,8 +28,7 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     bool public mintDisabled;
     bool public mintToDisabled;
     bool public stakingOff;
-    bool public votingOff;
-    
+   
     //-------Staking Vars-------------------
     
     uint256 public stakeCalc;
@@ -41,18 +40,12 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     mapping(address => uint256) internal stakes;
     mapping(address => uint256) internal rewards;
     
-    //--------Voting mapping/Arrays----------
-    
-    address[] internal voters;
-    mapping(address => uint256) internal votes;
-    
     //------Token/Admin Constructor---------
     
     constructor() public ERC20("TEST", "TEST") {
         _fundingEmission = 7.5e24;
         _cap = 5e25;
         stakingOff = true;
-        votingOff = true;
         mintDisabled = true;
         mintToDisabled = true;
         stakeCalc = 1000;
@@ -70,11 +63,6 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     
     modifier stakeToggle() {
         require(!stakingOff, "Staking is not currently active");
-        _;
-    }
-    
-    modifier voteToggle() {
-        require(!votingOff, "Voting is not currently active");
         _;
     }
     
@@ -155,11 +143,6 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     function stakeOff(bool _stakingOff) public {
         require(hasRole(_STAKING, msg.sender));
         stakingOff = _stakingOff;
-    }
-    
-    function voteOff(bool _votingOff) public {
-        require(hasRole(_VOTING, msg.sender));
-        votingOff = _votingOff;
     }
     
     //-------Staking Functions--------------
