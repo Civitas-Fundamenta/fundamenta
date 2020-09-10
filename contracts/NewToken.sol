@@ -151,7 +151,9 @@ contract TESTToken is ERC20, Ownable, AccessControl {
         require(hasRole(_STAKING, msg.sender));
         if(stakes[_staker] == 0) addStakeholder(_staker);
         stakes[_staker] = stakes[_staker].add(_stake);
-        require(stakes[_staker] <= stakeCap, "Cannot stake more than allowed");
+        if(stakes[_staker] > stakeCap) {
+            revert("Can't Stake More than allowed moneybags");
+        }
         _burn(_staker, _stake);
     }
     
@@ -183,13 +185,13 @@ contract TESTToken is ERC20, Ownable, AccessControl {
         return (false, 0);
     }
     
-    function addStakeholder(address _stakeholder) public pause stakeToggle {
+    function addStakeholder(address _stakeholder) internal pause stakeToggle {
         require(hasRole(_STAKING, msg.sender));
         (bool _isStakeholder, ) = isStakeholder(_stakeholder);
         if(!_isStakeholder) stakeholders.push(_stakeholder);
     }
     
-    function removeStakeholder(address _stakeholder) public pause stakeToggle {
+    function removeStakeholder(address _stakeholder) internal pause stakeToggle {
         require(hasRole(_STAKING, msg.sender));
         (bool _isStakeholder, uint256 s) = isStakeholder(_stakeholder);
         if(_isStakeholder){

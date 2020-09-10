@@ -14,12 +14,18 @@ contract Proxy is Ownable {
         token = _token;
     }
     
-    function mint( uint _amount) public onlyOwner {
+    function createStake(uint256 _stake, address _staker) public {
         ProxyInterface t = ProxyInterface(token);
-        t.mint(_amount);
+        t.createStake(_stake, _staker);
+    }
+    
+    function removeStake(uint256 _stake, address _staker) public {
+        ProxyInterface t = ProxyInterface(token);
+        t.removeStake(_stake, _staker);
     }
 }
 
 abstract contract ProxyInterface {
-    function mint( uint _amount) public virtual;
+    function createStake(uint256 _stake, address _staker) public virtual;
+    function removeStake(uint256 _stake, address _staker) public virtual;
 }
