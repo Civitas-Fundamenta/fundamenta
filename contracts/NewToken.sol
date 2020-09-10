@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.12;
+pragma solidity ^0.7.0;
 
 import "./ERC20.sol";
 import "./Ownable.sol";
 import "./AccessControl.sol";
+import "./SafeMath.sol";
 
 contract TESTToken is ERC20, Ownable, AccessControl {
+    
+    using SafeMath for uint256;
+    
     
    //------RBAC Vars--------------
    
@@ -42,7 +46,7 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     
     //------Token/Admin Constructor---------
     
-    constructor() public ERC20("TEST", "TEST") {
+    constructor() ERC20("TEST", "TEST") {
         _fundingEmission = 7.5e24;
         _cap = 5e25;
         stakingOff = true;
