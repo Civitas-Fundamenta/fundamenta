@@ -44,7 +44,7 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe, AccessControlUpgradeSafe,
     bool public votingOff = true;
     
     
-    //------Token/Admin Constructor---------
+    //------Contract Initializer---------
     
     bool private initialized;
     
@@ -60,7 +60,6 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe, AccessControlUpgradeSafe,
         _fundingAllocation = 7.5e24;
         _mint(msg.sender, _fundingAllocation);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setRoleAdmin(USER_ROLE, DEFAULT_ADMIN_ROLE);
         __Context_init_unchained();
         __ERC20_init_unchained(name, symbol);
         __Context_init_unchained();
