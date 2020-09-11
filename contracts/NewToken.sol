@@ -113,7 +113,9 @@ contract TESTToken is ERC20, Ownable, AccessControl {
 
     function setSupplyCap(uint _supplyCap) public pause {
         require(hasRole(_SUPPLY, msg.sender));
-        require(_supplyCap >= totalSupply(), "Yeah... Can't make the supply cap less then the total supply.");
+        if(_supplyCap >= totalSupply()) {
+            revert ("Yeah... Can't make the supply cap less then the total supply.");
+        }
         _cap = _supplyCap;
     }
     
