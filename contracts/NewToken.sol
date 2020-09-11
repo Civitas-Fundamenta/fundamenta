@@ -5,13 +5,15 @@ pragma solidity ^0.6.12;
 import "./ERC20.sol";
 import "./EnumerableSet.sol";
 import "./Initializable.sol";
+import "./AccessControl.sol";
+import "./Ownable.sol";
 
-contract FMTAToken is Initializable, ERC20UpgradeSafe{
+contract FMTAToken is Initializable, ERC20UpgradeSafe, AccessControlUpgradeSafe, OwnableUpgradeSafe {
     
    //------Token Vars-------------
    
-    uint256 private _cap = 5e25;
-    uint256 public _premine;
+    uint256 private _cap;
+    uint256 public _fundingAllocation;
     bytes32 public constant _MINTER = keccak256("_MINTER");
     bytes32 public constant _BURNER = keccak256("_BURNER");
     bytes32 public constant _DISTRIBUTOR = keccak256("_DISTRIBUTOR");
@@ -19,18 +21,21 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe{
     bytes32 public constant _STAKING = keccak256("_STAKING");
     bytes32 public constant _VOTING = keccak256("_VOTING");
     bytes32 public constant _SUPPLY = keccak256("_SUPPLY");
-    bytes32 public constant _KILLER = keccak256("_KILLER");
-    bytes32 public constant _GOD = keccak256("_GOD");
     bool public paused;
+    
+    //--------Toggle Vars-------------------
+    
+    bool public mintDisabled;
+    bool public mintToDisabled;
     
     //-------Staking Vars-------------------
     
     address[] internal stakeholders;
     mapping(address => uint256) internal stakes;
     mapping(address => uint256) internal rewards;
-    uint256 public stakeCalc = 1000;
-    uint256 public stakeCap = 3e22;
-    bool public stakingOff = true;
+    uint256 public stakeCalc;
+    uint256 public stakeCap;
+    bool public stakingOff;
     
     //--------Voting Vars-------------------
     
@@ -38,151 +43,70 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe{
     mapping(address => uint256) internal votes;
     bool public votingOff = true;
     
-    //--------Acesss Control-----------------
-    
-    function __AccessControl_init() internal initializer {
-        __Context_init_unchained();
-        __AccessControl_init_unchained();
-    }
-
-    function __AccessControl_init_unchained() internal initializer {
-
-
-    }
-
-    using EnumerableSet for EnumerableSet.AddressSet;
-    using Address for address;
-
-    struct RoleData {
-        EnumerableSet.AddressSet members;
-        bytes32 adminRole;
-    }
-
-    mapping (bytes32 => RoleData) private _roles;
-
-    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
-
-    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
-
-    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
-
-    function hasRole(bytes32 role, address account) public view returns (bool) {
-        return _roles[role].members.contains(account);
-    }
-
-    function getRoleMemberCount(bytes32 role) public view returns (uint256) {
-        return _roles[role].members.length();
-    }
-
-    function getRoleMember(bytes32 role, uint256 index) public view returns (address) {
-        return _roles[role].members.at(index);
-    }
-
-    function getRoleAdmin(bytes32 role) public view returns (bytes32) {
-        return _roles[role].adminRole;
-    }
-
-    function grantRole(bytes32 role, address account) public virtual {
-        require(hasRole(_GOD, msg.sender), "Only A God can do this");
-        require(hasRole(_roles[role].adminRole, _msgSender()), "AccessControl: sender must be an admin to grant");
-
-        _grantRole(role, account);
-    }
-
-    function revokeRole(bytes32 role, address account) public virtual {
-        require(hasRole(_GOD, msg.sender), "Only A God can do this");
-        require(hasRole(_roles[role].adminRole, _msgSender()), "AccessControl: sender must be an admin to revoke");
-
-        _revokeRole(role, account);
-    }
-
-    function renounceRole(bytes32 role, address account) public virtual {
-        require(account == _msgSender(), "AccessControl: can only renounce roles for self");
-
-        _revokeRole(role, account);
-    }
-
-    function _setupRole(bytes32 role, address account) internal virtual {
-        _grantRole(role, account);
-    }
-
-    function _setRoleAdmin(bytes32 role, bytes32 adminRole) internal virtual {
-        _roles[role].adminRole = adminRole;
-    }
-
-    function _grantRole(bytes32 role, address account) private {
-        if (_roles[role].members.add(account)) {
-            emit RoleGranted(role, account, _msgSender());
-        }
-    }
-
-    function _revokeRole(bytes32 role, address account) private {
-        if (_roles[role].members.remove(account)) {
-            emit RoleRevoked(role, account, _msgSender());
-        }
-    }
-
-    uint256[49] private __gap;
-    
     
     //------Token/Admin Constructor---------
     
     bool private initialized;
     
-    function initialize() public initializer {
+    function initialize (string memory name, string memory symbol) public initializer {
         require(!initialized, "Contract instance has already been initialized");
         initialized = true;
-        _premine = 7.5e24;
-        _mint(0x637aB4098639577F4BdA9668f597536819ea9345, _premine);
-        _mint(0x56aAf8Bb0e5E52E414FD530eac2DFcCc9cAa349b, 2.5e23);
-        _mint(0x223478514F46a1788aB86c78C431F7882fD53Af5, 1.75e23);
-        _mint(0x83363AC47b0147AB81b1b1215eF18B281C82Cd12, 7.5e22);
+        mintDisabled = true;
+        mintToDisabled = true;
+        stakingOff = true;
+        stakeCap = 3e22;
+        stakeCalc = 1000;
+        _cap = 5e25;
+        _fundingAllocation = 7.5e24;
+        _mint(msg.sender, _fundingAllocation);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(_GOD, msg.sender);
         _setRoleAdmin(USER_ROLE, DEFAULT_ADMIN_ROLE);
+        __Context_init_unchained();
+        __ERC20_init_unchained(name, symbol);
+        __Context_init_unchained();
+        __AccessControl_init_unchained();
+        __Context_init_unchained();
+        __Ownable_init_unchained();
+        
     }
     
-    //------Token Modifier------------------
+        //------Toggle Modifiers------------------
     
     modifier pause() {
         require(!paused, "Contract is Paused");
         _;
     }
     
-    //------Staking Modifier----------------
-    
     modifier stakeToggle() {
         require(!stakingOff, "Staking is not currently active");
         _;
     }
     
-    //------Voting Modifier-----------------
-    
-    modifier voteToggle() {
-        require(!votingOff, "Voting is not currently active");
+    modifier mintDis() {
+        require(!mintDisabled, "Minting is currently disabled");
         _;
     }
     
-    //-------Admin Modifiers----------------
+    modifier mintToDis() {
+        require(!mintToDisabled, "Minting to addresses is curently disabled");
+        _;
+    }
+    
+    //-------Admin Modifier----------------
     
        modifier onlyAdmin() {
-        require(isAdmin(msg.sender), "Restricted to admins.");
-        _;
-    }
-
-    modifier onlyUser() {
-        require(isUser(msg.sender), "Restricted to users.");
+        require(isAdmin(msg.sender), "Restricted to admins");
         _;
     }
     
     //------Token Functions-----------------
     
-    function mintTo(address _to, uint _amount) public pause {
+    function mintTo(address _to, uint _amount) public pause mintToDis{
         require(hasRole(_MINTER, msg.sender));
         _mint(_to, _amount);
     }
     
-    function mint( uint _amount) public pause {
+    function mint( uint _amount) public pause mintDis{
         require(hasRole(_MINTER, msg.sender));
         _mint(msg.sender, _amount);
     }
@@ -201,13 +125,14 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe{
 
     function setSupplyCap(uint _supplyCap) public pause {
         require(hasRole(_SUPPLY, msg.sender));
+        require(_supplyCap >= totalSupply(), "Yeah... Can't make the supply cap less then the total supply.");
         _cap = _supplyCap;
     }
     
     function supplyCap() public view returns (uint256) {
         return _cap;
     }
-
+    
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._beforeTokenTransfer(from, to, amount);
 
@@ -216,25 +141,43 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe{
         }
     }
     
-    //----------Pause Contract---------------
     
-    function setPaused(bool _paused) public onlyAdmin {
+    //--------Toggle Functions----------------
+    
+    function setPaused(bool _paused) public onlyOwner {
         paused = _paused;
+    }
+    
+    function disableMint(bool _disableMinting) public onlyOwner {
+        mintDisabled = _disableMinting;
+    }
+    
+    function disableMintTo(bool _disableMintTo) public onlyOwner {
+        mintToDisabled = _disableMintTo;
+    }
+    
+    function stakeOff(bool _stakingOff) public {
+        require(hasRole(_STAKING, msg.sender));
+        stakingOff = _stakingOff;
     }
     
     //-------Staking Functions--------------
     
-    function createStake(uint256 _stake) public pause stakeToggle {
-        if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
-        stakes[msg.sender] = stakes[msg.sender].add(_stake);
-        require(stakes[msg.sender] <= stakeCap, "Cannot stake more than allowed");
-        _burn(msg.sender, _stake);
+    function createStake(uint256 _stake, address _staker) public pause stakeToggle {
+        require(hasRole(_STAKING, msg.sender));
+        if(stakes[_staker] == 0) addStakeholder(_staker);
+        stakes[_staker] = stakes[_staker].add(_stake);
+        if(stakes[_staker] > stakeCap) {
+            revert("Can't Stake More than allowed moneybags");
+        }
+        _burn(_staker, _stake);
     }
     
-    function removeStake(uint256 _stake) public pause stakeToggle {
-        stakes[msg.sender] = stakes[msg.sender].sub(_stake);
-        if(stakes[msg.sender] == 0) removeStakeholder(msg.sender);
-        _mint(msg.sender, _stake);
+    function removeStake(uint256 _stake, address _staker) public pause stakeToggle {
+        require(hasRole(_STAKING, msg.sender));
+        stakes[_staker] = stakes[_staker].sub(_stake);
+        if(stakes[_staker] == 0) removeStakeholder(_staker);
+        _mint(_staker, _stake);
     }
     
     function stakeOf (address _stakeholder) public view returns(uint256) {
@@ -258,13 +201,13 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe{
         return (false, 0);
     }
     
-    function addStakeholder(address _stakeholder) public pause stakeToggle {
+    function addStakeholder(address _stakeholder) internal pause stakeToggle {
         require(hasRole(_STAKING, msg.sender));
         (bool _isStakeholder, ) = isStakeholder(_stakeholder);
         if(!_isStakeholder) stakeholders.push(_stakeholder);
     }
     
-    function removeStakeholder(address _stakeholder) public pause stakeToggle {
+    function removeStakeholder(address _stakeholder) internal pause stakeToggle {
         require(hasRole(_STAKING, msg.sender));
         (bool _isStakeholder, uint256 s) = isStakeholder(_stakeholder);
         if(_isStakeholder){
@@ -310,102 +253,26 @@ contract FMTAToken is Initializable, ERC20UpgradeSafe{
         }
     }
     
-    function stakeOff(bool _stakingOff) public onlyAdmin {
-        stakingOff = _stakingOff;
-    }
-    
-    //--------Voting System-----------------------
-    
-    function createVote(uint256 _vote) public voteToggle pause {
-        _burn(msg.sender, _vote);
-        if(votes[msg.sender] == 0) addVoter(msg.sender);
-        votes[msg.sender] = votes[msg.sender].add(_vote);
-    }
-    
-    function removeVote(uint256 _vote) public voteToggle pause {
-        votes[msg.sender] = votes[msg.sender].sub(_vote);
-        if(votes[msg.sender] == 0) removeVoter(msg.sender);
-        _mint(msg.sender, _vote);
-    }
-    
-    function voteOf (address _voter) public view returns(uint256) {
-        return votes[_voter];
-    }
-    
-    function totalVotes() public view returns(uint256) {
-        uint256 _totalVotes = 0;
-        for (uint256 s = 0; s < voters.length; s += 1) {
-            _totalVotes = _totalVotes.add(stakes[voters[s]]);
-        }
-        
-        return _totalVotes;
-    }
-    
-    function isVoter(address _address) public view returns(bool, uint256) {
-        for (uint256 s = 0; s < voters.length; s += 1) {
-            if (_address == voters[s]) return (true, s);
-        }
-        
-        return (false, 0);
-    }
-    
-    function addVoter(address _voter) public voteToggle pause {
-        require(hasRole(_VOTING, msg.sender));
-        (bool _isVoter, ) = isVoter(_voter);
-        if(!_isVoter) voters.push(_voter);
-    }
-    
-    function removeVoter(address _voter) public voteToggle pause {
-        require(hasRole(_VOTING, msg.sender));
-        (bool _isVoter, uint256 s) = isVoter(_voter);
-        if(_isVoter){
-            voters[s] = voters[voters.length - 1];
-            voters.pop();
-        }
-    }
-    
-    function voteOff(bool _votingOff) public onlyAdmin {
-        votingOff = _votingOff;
-    }
-    
     //--------Admin---------------------------
    
     function isAdmin(address account) public virtual view returns (bool) {
         return hasRole(DEFAULT_ADMIN_ROLE, account);
     }
 
-    function isUser(address account) public virtual view returns (bool) {
-        return hasRole(USER_ROLE, account);
-    }
-
-    function addUser(address account) public virtual onlyAdmin {
-        grantRole(USER_ROLE, account);
-    }
-
-    function addAdmin(address account) public virtual onlyAdmin {
-        require(hasRole(_GOD, msg.sender), "Only A God can do this");
+    function addAdmin(address account) public virtual onlyOwner {
         grantRole(DEFAULT_ADMIN_ROLE, account);
     }
     
-    function removeAdmin(address account) public virtual onlyAdmin {
-        require(hasRole(_GOD, msg.sender), "Only A God can do this");
+    function removeAdmin(address account) public virtual onlyOwner {
         revokeRole(DEFAULT_ADMIN_ROLE, account);
-    }
-
-    function removeUser(address account) public virtual onlyAdmin {
-        revokeRole(USER_ROLE, account);
     }
 
     function renounceAdmin() public virtual {
         renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
     
-    //-----------Contract Self Destruct----------------------
+    uint256[51] private _______gap;
     
-    function death() public {
-        require(hasRole(_KILLER, msg.sender),"You do not possess the right weapon to vanquish this beast");
-        selfdestruct(msg.sender);
-    }
 }
 
 
