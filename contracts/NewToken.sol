@@ -35,29 +35,14 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     bool public paused;
     bool public mintDisabled;
     bool public mintToDisabled;
-    bool public stakingOff;
    
-    //-------Staking Vars-------------------
-    
-    uint256 public stakeCalc;
-    uint256 public stakeCap;
-    
-    //--------Staking mapping/Arrays----------
-
-    address[] internal stakeholders;
-    mapping(address => uint256) internal stakes;
-    mapping(address => uint256) internal rewards;
-    
     //------Token/Admin Constructor---------
     
     constructor() ERC20("TEST", "TEST") {
         _fundingEmission = 7.5e24;
         _cap = 5e25;
-        stakingOff = true;
         mintDisabled = true;
         mintToDisabled = true;
-        stakeCalc = 1000;
-        stakeCap = 3e22;
         _mint(msg.sender, _fundingEmission);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -69,10 +54,7 @@ contract TESTToken is ERC20, Ownable, AccessControl {
         _;
     }
     
-    modifier stakeToggle() {
-        require(!stakingOff, "Staking is not currently active");
-        _;
-    }
+    
     
     modifier mintDis() {
         require(!mintDisabled, "Minting is currently disabled");
@@ -150,102 +132,11 @@ contract TESTToken is ERC20, Ownable, AccessControl {
         mintToDisabled = _disableMintTo;
     }
     
-    function stakeOff(bool _stakingOff) public {
-        require(hasRole(_STAKING, msg.sender));
-        stakingOff = _stakingOff;
-    }
     
     //-------Staking Functions--------------
     
-    function createStake(uint256 _stake, address _staker) external pause stakeToggle {
-        require(hasRole(_STAKING, msg.sender));
-        if(stakes[_staker] == 0) addStakeholder(_staker);
-        stakes[_staker] = stakes[_staker].add(_stake);
-        if(stakes[_staker] > stakeCap) {
-            revert("Can't Stake More than allowed moneybags");
-        }
-        _burn(_staker, _stake);
-    }
     
-    function removeStake(uint256 _stake, address _staker) external pause stakeToggle {
-        require(hasRole(_STAKING, msg.sender));
-        stakes[_staker] = stakes[_staker].sub(_stake);
-        if(stakes[_staker] == 0) removeStakeholder(_staker);
-        _mint(_staker, _stake);
-    }
     
-    function stakeOf (address _stakeholder) public view returns(uint256) {
-        return stakes[_stakeholder];
-    }
-    
-    function totalStakes() public view returns(uint256) {
-        uint256 _totalStakes = 0;
-        for (uint256 s = 0; s < stakeholders.length; s += 1) {
-            _totalStakes = _totalStakes.add(stakes[stakeholders[s]]);
-        }
-        
-        return _totalStakes;
-    }
-    
-    function isStakeholder(address _address) public view returns(bool, uint256) {
-        for (uint256 s = 0; s < stakeholders.length; s += 1) {
-            if (_address == stakeholders[s]) return (true, s);
-        }
-        
-        return (false, 0);
-    }
-    
-    function addStakeholder(address _stakeholder) internal pause stakeToggle {
-        require(hasRole(_STAKING, msg.sender));
-        (bool _isStakeholder, ) = isStakeholder(_stakeholder);
-        if(!_isStakeholder) stakeholders.push(_stakeholder);
-    }
-    
-    function removeStakeholder(address _stakeholder) internal pause stakeToggle {
-        require(hasRole(_STAKING, msg.sender));
-        (bool _isStakeholder, uint256 s) = isStakeholder(_stakeholder);
-        if(_isStakeholder){
-            stakeholders[s] = stakeholders[stakeholders.length - 1];
-            stakeholders.pop();
-        }
-    }
-    
-    function rewardOf(address _stakeholder) external view returns(uint256) {
-        return rewards[_stakeholder];
-    }
-    
-    function totalRewardsPaid() external view returns(uint256) {
-        uint256 _totalRewards = 0;
-        for (uint256 s = 0; s < stakeholders.length; s += 1){
-            _totalRewards = _totalRewards.add(rewards[stakeholders[s]]);
-        }
-        
-        return _totalRewards;
-    }
-    
-    function setStakeCalc(uint _stakeCalc) external pause {
-        require(hasRole(_STAKING, msg.sender));
-        stakeCalc = _stakeCalc;
-    }
-    
-    function setStakeCap(uint _stakeCap) external pause {
-        require(hasRole(_STAKING, msg.sender));
-        stakeCap = _stakeCap;
-    }
-    
-    function calculateReward(address _stakeholder) public view returns(uint256) {
-        return stakes[_stakeholder] / stakeCalc;
-    }
-    
-    function distributeRewards() external pause stakeToggle{
-        require(hasRole(_DISTRIBUTOR, msg.sender));
-        for (uint256 s = 0; s < stakeholders.length; s += 1) {
-            address stakeholder = stakeholders[s];
-            uint256 reward = calculateReward(stakeholder);
-            rewards[stakeholder] = rewards[stakeholder].add(reward);
-            _mint(stakeholder, reward);
-        }
-    }
     
     //--------Admin---------------------------
    
