@@ -2,15 +2,16 @@
 
 pragma solidity ^0.7.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./Ownable.sol";
+import "./AccessControl.sol";
+import "./SafeMath.sol";
 
 
 
 contract Proxy is Ownable, AccessControl {
 
     using SafeMath for uint256;
+    using Address for address;
     
     address public token;
 
@@ -38,6 +39,7 @@ contract Proxy is Ownable, AccessControl {
         stakingOff = true;
         stakeCalc = 1000;
         stakeCap = 3e22;
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     //-------Set Token Address----------------
@@ -167,7 +169,7 @@ contract Proxy is Ownable, AccessControl {
 
 }
 
-abstract contract Interface {
-    function burnFrom(address _from, uint _amount) external virtual;
-    function mintTo(address _to, uint _amount) external virtual;
+interface Interface{
+    function burnFrom(address _from, uint _amount) external;
+    function mintTo(address _to, uint _amount) external;
 }
