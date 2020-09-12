@@ -5,7 +5,7 @@ pragma solidity ^0.7.0;
 import "./Ownable.sol";
 import "./AccessControl.sol";
 import "./SafeMath.sol";
-
+import "./TokenInterface.sol";
 
 
 contract Proxy is Ownable, AccessControl {
@@ -167,9 +167,4 @@ contract Proxy is Ownable, AccessControl {
     }
     
 
-}
-
-interface Interface{
-    function burnFrom(address _from, uint _amount) external;
-    function mintTo(address _to, uint _amount) external;
 }

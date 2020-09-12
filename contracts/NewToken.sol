@@ -21,8 +21,6 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     bytes32 public constant _MINTER = keccak256("_MINTER");
     bytes32 public constant _BURNER = keccak256("_BURNER");
     bytes32 public constant _DISTRIBUTOR = keccak256("_DISTRIBUTOR");
-    bytes32 public constant _STAKING = keccak256("_STAKING");
-    bytes32 public constant _VOTING = keccak256("_VOTING");
     bytes32 public constant _SUPPLY = keccak256("_SUPPLY");
    
    //------Token Vars----------------------
@@ -61,13 +59,6 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     
     modifier mintToDis() {
         require(!mintToDisabled, "Minting to addresses is curently disabled");
-        _;
-    }
-    
-    //-------Admin Modifier----------------
-    
-       modifier onlyAdmin() {
-        require(isAdmin(msg.sender), "Restricted to admins");
         _;
     }
     
@@ -131,23 +122,6 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     }
 
     
-    //--------Admin---------------------------
-   
-    function isAdmin(address account) public virtual view returns (bool) {
-        return hasRole(DEFAULT_ADMIN_ROLE, account);
-    }
-
-    function addAdmin(address account) public virtual onlyOwner {
-        grantRole(DEFAULT_ADMIN_ROLE, account);
-    }
-    
-    function removeAdmin(address account) public virtual onlyOwner {
-        revokeRole(DEFAULT_ADMIN_ROLE, account);
-    }
-
-    function renounceAdmin() public virtual {
-        renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    }
 }
 
 
