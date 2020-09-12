@@ -2,14 +2,18 @@
 
 pragma solidity ^0.7.0;
 
-import "./ERC20.sol";
-import "./Ownable.sol";
-import "./AccessControl.sol";
-import "./SafeMath.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract TESTToken is ERC20, Ownable, AccessControl {
     
+    using SafeERC20 for IERC20;
     using SafeMath for uint256;
+    using Address for address;
+    
     
     
    //------RBAC Vars--------------
@@ -89,29 +93,29 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     
     //------Token Functions-----------------
     
-    function mintTo(address _to, uint _amount) public pause mintToDis{
+    function mintTo(address _to, uint _amount) external pause mintToDis{
         require(hasRole(_MINTER, msg.sender));
         _mint(_to, _amount);
     }
     
-    function mint( uint _amount) public pause mintDis{
+    function mint( uint _amount) external pause mintDis{
         require(hasRole(_MINTER, msg.sender));
         _mint(msg.sender, _amount);
     }
     
-    function burn(uint _amount) public pause { 
+    function burn(uint _amount) external pause { 
         require(hasRole(_BURNER, msg.sender));
         _burn(msg.sender,  _amount);
     }
     
-    function burnFrom(address _from, uint _amount) public pause {
+    function burnFrom(address _from, uint _amount) external pause {
         require(hasRole(_BURNER, msg.sender));
         _burn(_from, _amount);
     }
 
     //----------Supply Cap------------------
 
-    function setSupplyCap(uint _supplyCap) public pause {
+    function setSupplyCap(uint _supplyCap) external pause {
         require(hasRole(_SUPPLY, msg.sender));
         if(_supplyCap >= totalSupply()) {
             revert ("Yeah... Can't make the supply cap less then the total supply.");
@@ -134,15 +138,15 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     
     //--------Toggle Functions----------------
     
-    function setPaused(bool _paused) public onlyOwner {
+    function setPaused(bool _paused) external onlyOwner {
         paused = _paused;
     }
     
-    function disableMint(bool _disableMinting) public onlyOwner {
+    function disableMint(bool _disableMinting) external onlyOwner {
         mintDisabled = _disableMinting;
     }
     
-    function disableMintTo(bool _disableMintTo) public onlyOwner {
+    function disableMintTo(bool _disableMintTo) external onlyOwner {
         mintToDisabled = _disableMintTo;
     }
     
@@ -153,7 +157,7 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     
     //-------Staking Functions--------------
     
-    function createStake(uint256 _stake, address _staker) public pause stakeToggle {
+    function createStake(uint256 _stake, address _staker) external pause stakeToggle {
         require(hasRole(_STAKING, msg.sender));
         if(stakes[_staker] == 0) addStakeholder(_staker);
         stakes[_staker] = stakes[_staker].add(_stake);
@@ -163,7 +167,7 @@ contract TESTToken is ERC20, Ownable, AccessControl {
         _burn(_staker, _stake);
     }
     
-    function removeStake(uint256 _stake, address _staker) public pause stakeToggle {
+    function removeStake(uint256 _stake, address _staker) external pause stakeToggle {
         require(hasRole(_STAKING, msg.sender));
         stakes[_staker] = stakes[_staker].sub(_stake);
         if(stakes[_staker] == 0) removeStakeholder(_staker);
@@ -206,11 +210,11 @@ contract TESTToken is ERC20, Ownable, AccessControl {
         }
     }
     
-    function rewardOf(address _stakeholder) public view returns(uint256) {
+    function rewardOf(address _stakeholder) external view returns(uint256) {
         return rewards[_stakeholder];
     }
     
-    function totalRewards() public view returns(uint256) {
+    function totalRewardsPaid() external view returns(uint256) {
         uint256 _totalRewards = 0;
         for (uint256 s = 0; s < stakeholders.length; s += 1){
             _totalRewards = _totalRewards.add(rewards[stakeholders[s]]);
@@ -219,12 +223,12 @@ contract TESTToken is ERC20, Ownable, AccessControl {
         return _totalRewards;
     }
     
-    function setStakeCalc(uint _stakeCalc) public pause {
+    function setStakeCalc(uint _stakeCalc) external pause {
         require(hasRole(_STAKING, msg.sender));
         stakeCalc = _stakeCalc;
     }
     
-    function setStakeCap(uint _stakeCap) public pause {
+    function setStakeCap(uint _stakeCap) external pause {
         require(hasRole(_STAKING, msg.sender));
         stakeCap = _stakeCap;
     }
@@ -233,7 +237,7 @@ contract TESTToken is ERC20, Ownable, AccessControl {
         return stakes[_stakeholder] / stakeCalc;
     }
     
-    function distributeRewards() public pause stakeToggle{
+    function distributeRewards() external pause stakeToggle{
         require(hasRole(_DISTRIBUTOR, msg.sender));
         for (uint256 s = 0; s < stakeholders.length; s += 1) {
             address stakeholder = stakeholders[s];
