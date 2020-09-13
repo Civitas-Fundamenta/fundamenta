@@ -66,21 +66,21 @@ contract Staking is Ownable, AccessControl {
 
     //--------------------------------------------
 
-    function createStake(uint256 _stake, address _staker) external pause stakeToggle {
-        if(stakes[_staker] == 0) addStakeholder(_staker);
-        stakes[_staker] = stakes[_staker].add(_stake);
-        if(stakes[_staker] > stakeCap) {
+    function createStake(uint256 _stake) external pause stakeToggle {
+        if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
+        stakes[msg.sender] = stakes[msg.sender].add(_stake);
+        if(stakes[msg.sender] > stakeCap) {
             revert("Can't Stake More than allowed moneybags");
         }
         TokenInterface t = TokenInterface(token);
-        t.burnFrom(_staker, _stake);
+        t.burnFrom(msg.sender, _stake);
     }
     
-    function removeStake(uint256 _stake, address _staker) external pause stakeToggle {
-        stakes[_staker] = stakes[_staker].sub(_stake);
-        if(stakes[_staker] == 0) removeStakeholder(_staker);
+    function removeStake(uint256 _stake) external pause stakeToggle {
+        stakes[msg.sender] = stakes[msg.sender].sub(_stake);
+        if(stakes[msg.sender] == 0) removeStakeholder(msg.sender);
         TokenInterface t = TokenInterface(token);
-        t.mintTo(_staker, _stake);
+        t.mintTo(msg.sender, _stake);
     }
 
     function distributeRewards() external pause stakeToggle{
