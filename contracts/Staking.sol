@@ -8,10 +8,9 @@ import "./SafeMath.sol";
 import "./TokenInterface.sol";
 
 
-contract Proxy is Ownable, AccessControl {
+contract Staking is Ownable, AccessControl {
 
     using SafeMath for uint256;
-    using Address for address;
     
     address public token;
 
@@ -68,21 +67,19 @@ contract Proxy is Ownable, AccessControl {
     //--------------------------------------------
 
     function createStake(uint256 _stake, address _staker) external pause stakeToggle {
-        require(hasRole(_STAKING, msg.sender));
         if(stakes[_staker] == 0) addStakeholder(_staker);
         stakes[_staker] = stakes[_staker].add(_stake);
         if(stakes[_staker] > stakeCap) {
             revert("Can't Stake More than allowed moneybags");
         }
-        Interface t = Interface(token);
+        TokenInterface t = TokenInterface(token);
         t.burnFrom(_staker, _stake);
     }
     
     function removeStake(uint256 _stake, address _staker) external pause stakeToggle {
-        require(hasRole(_STAKING, msg.sender));
         stakes[_staker] = stakes[_staker].sub(_stake);
         if(stakes[_staker] == 0) removeStakeholder(_staker);
-        Interface t = Interface(token);
+        TokenInterface t = TokenInterface(token);
         t.mintTo(_staker, _stake);
     }
 
@@ -92,7 +89,7 @@ contract Proxy is Ownable, AccessControl {
             address stakeholder = stakeholders[s];
             uint256 reward = calculateReward(stakeholder);
             rewards[stakeholder] = rewards[stakeholder].add(reward);
-            Interface t = Interface(token);
+            TokenInterface t = TokenInterface(token);
             t.mintTo(stakeholder, reward);
         }
     }
@@ -119,13 +116,11 @@ contract Proxy is Ownable, AccessControl {
     }
     
     function addStakeholder(address _stakeholder) internal pause stakeToggle {
-        require(hasRole(_STAKING, msg.sender));
         (bool _isStakeholder, ) = isStakeholder(_stakeholder);
         if(!_isStakeholder) stakeholders.push(_stakeholder);
     }
     
     function removeStakeholder(address _stakeholder) internal pause stakeToggle {
-        require(hasRole(_STAKING, msg.sender));
         (bool _isStakeholder, uint256 s) = isStakeholder(_stakeholder);
         if(_isStakeholder){
             stakeholders[s] = stakeholders[stakeholders.length - 1];

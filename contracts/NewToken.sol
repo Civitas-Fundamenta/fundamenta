@@ -7,14 +7,13 @@ import "./SafeERC20.sol";
 import "./Ownable.sol";
 import "./AccessControl.sol";
 import "./SafeMath.sol";
+import "./Context.sol";
 
 contract TESTToken is ERC20, Ownable, AccessControl {
     
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using Address for address;
-    
-    
     
    //------RBAC Vars--------------
    
@@ -23,12 +22,12 @@ contract TESTToken is ERC20, Ownable, AccessControl {
     bytes32 public constant _DISTRIBUTOR = keccak256("_DISTRIBUTOR");
     bytes32 public constant _SUPPLY = keccak256("_SUPPLY");
    
-   //------Token Vars----------------------
+   //------Token Variables------------------
    
     uint256 private _cap;
     uint256 public _fundingEmission;
     
-    //-------Toggle Vars--------------------
+    //-------Toggle Variables---------------
     
     bool public paused;
     bool public mintDisabled;
@@ -44,7 +43,21 @@ contract TESTToken is ERC20, Ownable, AccessControl {
         _mint(msg.sender, _fundingEmission);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
+
+    //--------Toggle Functions----------------
     
+    function setPaused(bool _paused) external onlyOwner {
+        paused = _paused;
+    }
+    
+    function disableMint(bool _disableMinting) external onlyOwner {
+        mintDisabled = _disableMinting;
+    }
+    
+    function disableMintTo(bool _disableMintTo) external onlyOwner {
+        mintToDisabled = _disableMintTo;
+    }
+
     //------Toggle Modifiers------------------
     
     modifier pause() {
@@ -105,26 +118,4 @@ contract TESTToken is ERC20, Ownable, AccessControl {
             require(totalSupply().add(amount) <= _cap, "There is a Supply Cap dude. Come on...");
         }
     }
-    
-    
-    //--------Toggle Functions----------------
-    
-    function setPaused(bool _paused) external onlyOwner {
-        paused = _paused;
-    }
-    
-    function disableMint(bool _disableMinting) external onlyOwner {
-        mintDisabled = _disableMinting;
-    }
-    
-    function disableMintTo(bool _disableMintTo) external onlyOwner {
-        mintToDisabled = _disableMintTo;
-    }
-
-    
 }
-
-
-
-   
-
