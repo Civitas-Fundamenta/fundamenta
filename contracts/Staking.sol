@@ -17,12 +17,12 @@ contract Staking is Ownable, AccessControl {
     //-------RBAC---------------------------
 
     bytes32 public constant _STAKING = keccak256("_STAKING");
-    bytes32 public constant _DISTRIBUTOR = keccak256("_DISTRIBUTOR");
 
     //-------Staking Vars-------------------
     
     uint256 public stakeCalc;
     uint256 public stakeCap;
+    uint256 public rewardsWindow;
     bool public stakingOff;
     bool public paused;
     
@@ -31,6 +31,8 @@ contract Staking is Ownable, AccessControl {
     address[] internal stakeholders;
     mapping(address => uint256) internal stakes;
     mapping(address => uint256) internal rewards;
+    mapping(address => uint256) internal lastWithdraw;
+    
 
     //-------Constructor----------------------
 
@@ -38,6 +40,7 @@ contract Staking is Ownable, AccessControl {
         stakingOff = true;
         stakeCalc = 1000;
         stakeCap = 3e22;
+        rewardsWindow = 6500;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -76,22 +79,36 @@ contract Staking is Ownable, AccessControl {
         t.burnFrom(msg.sender, _stake);
     }
     
-    function removeStake(uint256 _stake) external pause stakeToggle {
+    function removeStake(uint256 _stake) external pause {
+        if(stakes[msg.sender] == 0 && _stake != 0 ) 
+        revert("You don't have any tokens staked");
         stakes[msg.sender] = stakes[msg.sender].sub(_stake);
-        if(stakes[msg.sender] == 0) removeStakeholder(msg.sender);
-        TokenInterface t = TokenInterface(token);
-        t.mintTo(msg.sender, _stake);
-    }
-
-    function distributeRewards() external pause stakeToggle{
-        require(hasRole(_DISTRIBUTOR, msg.sender));
-        for (uint256 s = 0; s < stakeholders.length; s += 1) {
-            address stakeholder = stakeholders[s];
-            uint256 reward = calculateReward(stakeholder);
-            rewards[stakeholder] = rewards[stakeholder].add(reward);
+        if(stakes[msg.sender] == 0) {
+            removeStakeholder(msg.sender);
             TokenInterface t = TokenInterface(token);
-            t.mintTo(stakeholder, reward);
+            t.mintTo(msg.sender, _stake);
         }
+        
+    }
+    
+    function withdrawReward() external {
+        
+        uint256 reward = calculateReward(msg.sender);
+        rewards[msg.sender] = rewards[msg.sender].add(reward);
+        TokenInterface t = TokenInterface(token);
+        if(lastWithdraw[msg.sender] == 0) {
+           t.mintTo(msg.sender, reward); 
+           lastWithdraw[msg.sender] = block.number;
+        } else if (lastWithdraw[msg.sender] != 0){
+            require(block.number > lastWithdraw[msg.sender] + rewardsWindow, "It hasn't been enough time since your last withdrawl");
+            t.mintTo(msg.sender, reward);
+            lastWithdraw[msg.sender] = block.number;
+        }
+    }
+    
+    function lastWdHeight() external view returns (uint256) {
+        
+        return lastWithdraw[msg.sender];
     }
 
     function stakeOf (address _stakeholder) public view returns(uint256) {
@@ -149,6 +166,11 @@ contract Staking is Ownable, AccessControl {
     function setStakeCap(uint _stakeCap) external pause {
         require(hasRole(_STAKING, msg.sender));
         stakeCap = _stakeCap;
+    }
+    
+    function setRewardsWindow(uint256 _newWindow) external pause {
+        require(hasRole(_STAKING, msg.sender));
+        rewardsWindow = _newWindow;
     }
     
     function calculateReward(address _stakeholder) public view returns(uint256) {
