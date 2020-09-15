@@ -13,6 +13,14 @@ contract Staking is Ownable, AccessControl {
     using SafeMath for uint256;
     
     address public token;
+    
+    /**
+     * @dev Smart Contract uses Role Based Access Control to 
+     * 
+     * alllow for secure access as well as enabling the ability 
+     *
+     * for other contracts such as oracles to interact with it.
+     */
 
     //-------RBAC---------------------------
 
@@ -33,7 +41,6 @@ contract Staking is Ownable, AccessControl {
     mapping(address => uint256) internal stakes;
     mapping(address => uint256) internal rewards;
     mapping(address => uint256) internal lastWithdraw;
-    mapping(address => uint256) internal accruedRewards;
     
 
     //-------Constructor----------------------
@@ -53,7 +60,7 @@ contract Staking is Ownable, AccessControl {
         token = _token;
     }
     
-    //------------------------------------------
+    //-------Modifiers--------------------------
 
     modifier pause() {
         require(!paused, "Contract is Paused");
@@ -70,7 +77,17 @@ contract Staking is Ownable, AccessControl {
         _;
     }
 
-    //--------------------------------------------
+    //--------Staking Functions-------------------
+
+    /**
+     * @dev allows a user to create a staking positon. Users will
+     * 
+     * not be allowed to stake more than the `stakeCap` which is 
+     *
+     * a settable variable by Admins/Contrcats with the `_STAKING` 
+     * 
+     * Role.
+     */
 
     function createStake(uint256 _stake) public pause stakeToggle {
         if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
@@ -81,6 +98,14 @@ contract Staking is Ownable, AccessControl {
         TokenInterface t = TokenInterface(token);
         t.burnFrom(msg.sender, _stake);
     }
+    
+    /**
+     * @dev removes a users staked positon if the required lock
+     * 
+     * window is satisfied. Also pays out any `_rewardsAccrued` to
+     *
+     * the user if any rewards are pending.
+     */
     
     function removeStake(uint256 _stake) public pause {
         if(stakes[msg.sender] == 0 && _stake != 0 ) 
@@ -102,6 +127,10 @@ contract Staking is Ownable, AccessControl {
         
     }
     
+    /**
+     * @dev returns the amount of rewards a user as accrued.
+     */
+    
     function rewardsAccrued() public view returns (uint256) {
         uint256 _rewardsAccrued;
         uint256 multiplier;
@@ -111,6 +140,12 @@ contract Staking is Ownable, AccessControl {
         
     }
     
+    /**
+     * @dev allows user to withrdraw any pending rewards as
+     * 
+     * long as the `rewardsWindow` is satisfied.
+     */
+     
     function withdrawReward() public pause stakeToggle {
         uint256 reward;
         uint256 multiplier;
@@ -128,9 +163,23 @@ contract Staking is Ownable, AccessControl {
         }
     }
     
+    /**
+     * @dev returns a users `lastWithdraw` which is the last block
+     * 
+     * height that the user last withdrew rewards.
+     */
+    
     function lastWdHeight() public view returns (uint256) {
         return lastWithdraw[msg.sender];
     }
+    
+    /**
+     * @dev returns to the user the amount of blocks that they must
+     * 
+     * have their stake locked before they are able to unstake their
+     * 
+     * positon.
+     */
     
     function stakeUnlockWindow() external view returns (uint256) {
         uint256 unlockWindow = rewardsWindow.mul(stakeLockMultiplier);
@@ -138,14 +187,34 @@ contract Staking is Ownable, AccessControl {
         return stakeWindow;
     }
     
+    /**
+     * @dev allows admin with the `_STAKING` role to set the 
+     * 
+     * `stakeMultiplier` which is used in the calculation that
+     *
+     * determines how long a user must have a staked positon 
+     * 
+     * before they are able to unstake said positon.
+     */
+    
     function setStakeMultiplier(uint256 _newMultiplier) public {
         require(hasRole(_STAKING, msg.sender));
         stakeLockMultiplier = _newMultiplier;
     }
     
+    /**
+     * @dev returns a users staked position.
+     */
+    
     function stakeOf (address _stakeholder) public view returns(uint256) {
         return stakes[_stakeholder];
     }
+    
+    /**
+     * @dev returns the total amount of FMTA that has been 
+     * 
+     * placed in staking postions by users.
+     */
     
     function totalStakes() public view returns(uint256) {
         uint256 _totalStakes = 0;
@@ -156,6 +225,12 @@ contract Staking is Ownable, AccessControl {
         return _totalStakes;
     }
     
+    /**
+     * @dev returns if an account is a stakeholder and holds
+     * 
+     * a staked position.
+     */
+
     function isStakeholder(address _address) public view returns(bool, uint256) {
         for (uint256 s = 0; s < stakeholders.length; s += 1) {
             if (_address == stakeholders[s]) return (true, s);
@@ -164,10 +239,18 @@ contract Staking is Ownable, AccessControl {
         return (false, 0);
     }
     
+    /**
+     * @dev internal function that adds accounts as stakeholders.
+     */
+    
     function addStakeholder(address _stakeholder) internal pause stakeToggle {
         (bool _isStakeholder, ) = isStakeholder(_stakeholder);
         if(!_isStakeholder) stakeholders.push(_stakeholder);
     }
+    
+    /**
+     * @dev internal function that removes accounts as stakeholders.
+     */
     
     function removeStakeholder(address _stakeholder) internal pause stakeToggle {
         (bool _isStakeholder, uint256 s) = isStakeholder(_stakeholder);
@@ -177,9 +260,21 @@ contract Staking is Ownable, AccessControl {
         }
     }
     
+    /**
+     * @dev returns an accounts total rewards paid over the
+     * 
+     * Staking Contracts lifetime.
+     */
+    
     function rewardOf(address _stakeholder) external view returns(uint256) {
         return rewards[_stakeholder];
     }
+    
+    /**
+     * @dev returns the amount of total rewards paid to all
+     * 
+     * accounts over the Staking Contracts lifetime.
+     */
     
     function totalRewardsPaid() external view returns(uint256) {
         uint256 _totalRewards = 0;
@@ -190,20 +285,58 @@ contract Staking is Ownable, AccessControl {
         return _totalRewards;
     }
     
+     /**
+     * @dev allows admin with the `_STAKING` role to set the
+     * 
+     * Staking Contracts `stakeCalc` which is the divisor used
+     * 
+     * in `calculateReward` to determine the reward during each 
+     * 
+     * `rewardsWindow`.
+     */
+    
     function setStakeCalc(uint _stakeCalc) external pause {
         require(hasRole(_STAKING, msg.sender));
         stakeCalc = _stakeCalc;
     }
+    
+     /**
+     * @dev allows admin with the `_STAKING` role to set the
+     * 
+     * Staking Contracts `stakeCap` which determines how many
+     * 
+     * tokens total can be staked per account.
+     */
     
     function setStakeCap(uint _stakeCap) external pause {
         require(hasRole(_STAKING, msg.sender));
         stakeCap = _stakeCap;
     }
     
+    /**
+     * @dev allows admin with the `_STAKING` role to set the
+     * 
+     * Staking Contracts `rewardsWindow` which determines how
+     * 
+     * long a user must wait before they can with draw in the 
+     * 
+     * form of a number of blocks that must pass since the users
+     * 
+     * `lastWithdraw`.
+     */
+    
     function setRewardsWindow(uint256 _newWindow) external pause {
         require(hasRole(_STAKING, msg.sender));
         rewardsWindow = _newWindow;
     }
+    
+    /**
+     * @dev simple function help track and calculate the rewards
+     * 
+     * accrued between rewards windows. it uses `stakeCalc` which
+     * 
+     * is settable by admins with the `_STAKING` role.
+     */
     
     function calculateReward(address _stakeholder) internal view returns(uint256) {
         return stakes[_stakeholder] / stakeCalc;
@@ -211,6 +344,10 @@ contract Staking is Ownable, AccessControl {
     
 
     //----------Pause----------------------
+
+    /**
+     * @dev pauses the Smart Contract.
+     */
 
     function setPaused(bool _paused) external onlyOwner {
         paused = _paused;
