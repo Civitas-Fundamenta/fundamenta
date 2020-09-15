@@ -99,6 +99,7 @@ contract Staking is Ownable, AccessControl {
         }
         TokenInterface t = TokenInterface(token);
         t.burnFrom(msg.sender, _stake);
+        lastWithdraw[msg.sender] = block.number;
     }
     
     /**
