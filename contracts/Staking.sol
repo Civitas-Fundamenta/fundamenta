@@ -34,6 +34,7 @@ contract Staking is Ownable, AccessControl {
     uint256 public stakeLockMultiplier;
     bool public stakingOff;
     bool public paused;
+    bool public emergencyWDoff;
     
     //--------Staking mapping/Arrays----------
 
@@ -47,6 +48,7 @@ contract Staking is Ownable, AccessControl {
 
     constructor(){
         stakingOff = true;
+        emergencyWDoff = true;
         stakeCalc = 1000;
         stakeCap = 3e22;
         rewardsWindow = 6500;
@@ -67,13 +69,13 @@ contract Staking is Ownable, AccessControl {
         _;
     }
 
-    function stakeOff(bool _stakingOff) public {
-        require(hasRole(_STAKING, msg.sender));
-        stakingOff = _stakingOff;
-    }
-
     modifier stakeToggle() {
         require(!stakingOff, "Staking is not currently active");
+        _;
+    }
+    
+    modifier emergency() {
+        require(!emergencyWDoff, "Emergency Withdraw is not enabled");
         _;
     }
 
@@ -164,6 +166,31 @@ contract Staking is Ownable, AccessControl {
     }
     
     /**
+     * @dev allows user to withrdraw any pending rewards and
+     * 
+     * staking position if `emergencyWDoff` is false enabling 
+     * 
+     * emergency withdraw situtaions when staking is off and 
+     * 
+     * the contract is paused.  This will likely never be used.
+     */
+    
+    function emergencyWithdrawRewardAndStakes(uint256 _stake) public emergency {
+        TokenInterface t = TokenInterface(token);
+        uint256 _rewardsAccrued;
+        uint256 multiplier;
+        multiplier = block.number.sub(lastWithdraw[msg.sender]).div(rewardsWindow);
+        _rewardsAccrued = calculateReward(msg.sender).mul(multiplier);
+        t.mintTo(msg.sender, _rewardsAccrued);
+        stakes[msg.sender] = stakes[msg.sender].sub(_stake);
+        if(stakes[msg.sender] == 0) {
+            removeStakeholder(msg.sender);
+            t.mintTo(msg.sender, _stake);
+            
+        }
+    }
+    
+    /**
      * @dev returns a users `lastWithdraw` which is the last block
      * 
      * height that the user last withdrew rewards.
@@ -197,7 +224,7 @@ contract Staking is Ownable, AccessControl {
      * before they are able to unstake said positon.
      */
     
-    function setStakeMultiplier(uint256 _newMultiplier) public {
+    function setStakeMultiplier(uint256 _newMultiplier) public pause stakeToggle {
         require(hasRole(_STAKING, msg.sender));
         stakeLockMultiplier = _newMultiplier;
     }
@@ -252,7 +279,7 @@ contract Staking is Ownable, AccessControl {
      * @dev internal function that removes accounts as stakeholders.
      */
     
-    function removeStakeholder(address _stakeholder) internal pause stakeToggle {
+    function removeStakeholder(address _stakeholder) internal {
         (bool _isStakeholder, uint256 s) = isStakeholder(_stakeholder);
         if(_isStakeholder){
             stakeholders[s] = stakeholders[stakeholders.length - 1];
@@ -295,7 +322,7 @@ contract Staking is Ownable, AccessControl {
      * `rewardsWindow`.
      */
     
-    function setStakeCalc(uint _stakeCalc) external pause {
+    function setStakeCalc(uint _stakeCalc) external pause stakeToggle {
         require(hasRole(_STAKING, msg.sender));
         stakeCalc = _stakeCalc;
     }
@@ -308,9 +335,24 @@ contract Staking is Ownable, AccessControl {
      * tokens total can be staked per account.
      */
     
-    function setStakeCap(uint _stakeCap) external pause {
+    function setStakeCap(uint _stakeCap) external pause stakeToggle {
         require(hasRole(_STAKING, msg.sender));
         stakeCap = _stakeCap;
+    }
+    
+     /**
+     * @dev allows admin with the `_STAKING` role to set the
+     * 
+     * Staking Contracts `stakeOff` bool to true ot false 
+     * 
+     * effecively turning staking on or off. The only function 
+     * 
+     * that is not effected is removng stake 
+     */
+    
+    function stakeOff(bool _stakingOff) public {
+        require(hasRole(_STAKING, msg.sender));
+        stakingOff = _stakingOff;
     }
     
     /**
@@ -325,7 +367,7 @@ contract Staking is Ownable, AccessControl {
      * `lastWithdraw`.
      */
     
-    function setRewardsWindow(uint256 _newWindow) external pause {
+    function setRewardsWindow(uint256 _newWindow) external pause stakeToggle {
         require(hasRole(_STAKING, msg.sender));
         rewardsWindow = _newWindow;
     }
@@ -340,6 +382,18 @@ contract Staking is Ownable, AccessControl {
     
     function calculateReward(address _stakeholder) internal view returns(uint256) {
         return stakes[_stakeholder] / stakeCalc;
+    }
+    
+    /**
+     * @dev turns on the emergencyWD function which is used for 
+     * 
+     * when the staking contract is paused or stopped for some
+     * 
+     * unforseeable reason and we still need to let users withdraw.
+     */
+    
+    function setEmergencyWDoff(bool _emergencyWD) external onlyOwner {
+        emergencyWDoff = _emergencyWD;
     }
     
 
