@@ -19,7 +19,6 @@ contract TESTToken is ERC20, Ownable, AccessControl {
    
     bytes32 public constant _MINTER = keccak256("_MINTER");
     bytes32 public constant _BURNER = keccak256("_BURNER");
-    bytes32 public constant _DISTRIBUTOR = keccak256("_DISTRIBUTOR");
     bytes32 public constant _SUPPLY = keccak256("_SUPPLY");
    
    //------Token Variables------------------

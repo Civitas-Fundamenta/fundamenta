@@ -91,8 +91,7 @@ contract Staking is Ownable, AccessControl {
         
     }
     
-    function withdrawReward() external {
-        
+    function withdrawReward() external pause stakeToggle {
         uint256 reward = calculateReward(msg.sender);
         rewards[msg.sender] = rewards[msg.sender].add(reward);
         TokenInterface t = TokenInterface(token);
@@ -109,6 +108,11 @@ contract Staking is Ownable, AccessControl {
     function lastWdHeight() external view returns (uint256) {
         
         return lastWithdraw[msg.sender];
+    }
+    
+    function curentBlockHeight() external view returns (uint256) {
+        
+        return block.number;
     }
 
     function stakeOf (address _stakeholder) public view returns(uint256) {
