@@ -110,11 +110,6 @@ contract Staking is Ownable, AccessControl {
         return lastWithdraw[msg.sender];
     }
     
-    function curentBlockHeight() external view returns (uint256) {
-        
-        return block.number;
-    }
-
     function stakeOf (address _stakeholder) public view returns(uint256) {
         return stakes[_stakeholder];
     }
