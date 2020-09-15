@@ -23,6 +23,7 @@ contract Staking is Ownable, AccessControl {
     uint256 public stakeCalc;
     uint256 public stakeCap;
     uint256 public rewardsWindow;
+    uint256 public stakeLockMultiplier;
     bool public stakingOff;
     bool public paused;
     
@@ -32,6 +33,7 @@ contract Staking is Ownable, AccessControl {
     mapping(address => uint256) internal stakes;
     mapping(address => uint256) internal rewards;
     mapping(address => uint256) internal lastWithdraw;
+    mapping(address => uint256) internal accruedRewards;
     
 
     //-------Constructor----------------------
@@ -41,6 +43,7 @@ contract Staking is Ownable, AccessControl {
         stakeCalc = 1000;
         stakeCap = 3e22;
         rewardsWindow = 6500;
+        stakeLockMultiplier = 2;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -69,7 +72,7 @@ contract Staking is Ownable, AccessControl {
 
     //--------------------------------------------
 
-    function createStake(uint256 _stake) external pause stakeToggle {
+    function createStake(uint256 _stake) public pause stakeToggle {
         if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
         if(stakes[msg.sender] > stakeCap) {
@@ -79,20 +82,34 @@ contract Staking is Ownable, AccessControl {
         t.burnFrom(msg.sender, _stake);
     }
     
-    function removeStake(uint256 _stake) external pause {
+    function removeStake(uint256 _stake) public pause {
         if(stakes[msg.sender] == 0 && _stake != 0 ) 
         revert("You don't have any tokens staked");
+        require(block.number >= lastWithdraw[msg.sender].add(rewardsWindow).mul(stakeLockMultiplier), "FMTA has not been staked for long enough");
         stakes[msg.sender] = stakes[msg.sender].sub(_stake);
         if(stakes[msg.sender] == 0) {
             removeStakeholder(msg.sender);
             TokenInterface t = TokenInterface(token);
             t.mintTo(msg.sender, _stake);
+            
         }
         
     }
     
+    function rewardsAccrued() public view returns (uint256) {
+        uint256 reward;
+        uint256 multiplier;
+        multiplier = block.number.sub(lastWithdraw[msg.sender]).div(rewardsWindow);
+        reward = calculateReward(msg.sender).mul(multiplier);
+        return reward;
+        
+    }
+    
     function withdrawReward() external pause stakeToggle {
-        uint256 reward = calculateReward(msg.sender);
+        uint256 reward;
+        uint256 multiplier;
+        multiplier = block.number.sub(lastWithdraw[msg.sender]).div(rewardsWindow);
+        reward = calculateReward(msg.sender).mul(multiplier);
         rewards[msg.sender] = rewards[msg.sender].add(reward);
         TokenInterface t = TokenInterface(token);
         if(lastWithdraw[msg.sender] == 0) {
@@ -105,9 +122,18 @@ contract Staking is Ownable, AccessControl {
         }
     }
     
-    function lastWdHeight() external view returns (uint256) {
-        
+    function lastWdHeight() public view returns (uint256) {
         return lastWithdraw[msg.sender];
+    }
+    
+    function stakeUnlockWindow() external view returns (uint256) {
+        uint256 stakeWindow = lastWithdraw[msg.sender].add(rewardsWindow).mul(stakeLockMultiplier);
+        return stakeWindow;
+    }
+    
+    function setStakeMultiplier(uint256 _newMultiplier) public {
+        require(hasRole(_STAKING, msg.sender));
+        stakeLockMultiplier = _newMultiplier;
     }
     
     function stakeOf (address _stakeholder) public view returns(uint256) {
@@ -172,9 +198,10 @@ contract Staking is Ownable, AccessControl {
         rewardsWindow = _newWindow;
     }
     
-    function calculateReward(address _stakeholder) public view returns(uint256) {
+    function calculateReward(address _stakeholder) internal view returns(uint256) {
         return stakes[_stakeholder] / stakeCalc;
     }
+    
 
     //----------Pause----------------------
 
