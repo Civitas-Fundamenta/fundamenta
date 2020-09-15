@@ -85,7 +85,8 @@ contract Staking is Ownable, AccessControl {
     function removeStake(uint256 _stake) public pause {
         if(stakes[msg.sender] == 0 && _stake != 0 ) 
         revert("You don't have any tokens staked");
-        require(block.number >= lastWithdraw[msg.sender].add(rewardsWindow).mul(stakeLockMultiplier), "FMTA has not been staked for long enough");
+        uint256 unlockWindow = rewardsWindow.mul(stakeLockMultiplier);
+        require(block.number >= lastWithdraw[msg.sender].add(unlockWindow), "FMTA has not been staked for long enough");
         stakes[msg.sender] = stakes[msg.sender].sub(_stake);
         if(stakes[msg.sender] == 0) {
             removeStakeholder(msg.sender);
@@ -127,7 +128,8 @@ contract Staking is Ownable, AccessControl {
     }
     
     function stakeUnlockWindow() external view returns (uint256) {
-        uint256 stakeWindow = lastWithdraw[msg.sender].add(rewardsWindow).mul(stakeLockMultiplier);
+        uint256 unlockWindow = rewardsWindow.mul(stakeLockMultiplier);
+        uint256 stakeWindow = lastWithdraw[msg.sender].add(unlockWindow);
         return stakeWindow;
     }
     
