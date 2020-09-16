@@ -100,6 +100,7 @@ contract Staking is Ownable, AccessControl {
         TokenInterface t = TokenInterface(token);
         t.burnFrom(msg.sender, _stake);
         lastWithdraw[msg.sender] = block.number;
+        emit stakeCreated(msg.sender, _stake, block.number);
     }
     
     /**
@@ -125,6 +126,7 @@ contract Staking is Ownable, AccessControl {
         if(stakes[msg.sender] == 0) {
             removeStakeholder(msg.sender);
             t.mintTo(msg.sender, _stake);
+            emit stakeRemoved(msg.sender, _stake, _rewardsAccrued, block.number);
             
         }
         
@@ -159,10 +161,12 @@ contract Staking is Ownable, AccessControl {
         if(lastWithdraw[msg.sender] == 0) {
            t.mintTo(msg.sender, reward); 
            lastWithdraw[msg.sender] = block.number;
+           emit rewardsWithdrawn(msg.sender, reward, block.number);
         } else if (lastWithdraw[msg.sender] != 0){
             require(block.number > lastWithdraw[msg.sender] + rewardsWindow, "It hasn't been enough time since your last withdrawl");
             t.mintTo(msg.sender, reward);
             lastWithdraw[msg.sender] = block.number;
+            emit rewardsWithdrawn(msg.sender, reward, block.number);
         }
     }
     
@@ -381,7 +385,7 @@ contract Staking is Ownable, AccessControl {
      * is settable by admins with the `_STAKING` role.
      */
     
-    function calculateReward(address _stakeholder) internal view returns(uint256) {
+    function calculateReward(address _stakeholder) public view returns(uint256) {
         return stakes[_stakeholder] / stakeCalc;
     }
     
@@ -408,5 +412,12 @@ contract Staking is Ownable, AccessControl {
         paused = _paused;
     }
     
+    //----------Events----------------------
+    
+    event stakeCreated(address _stakeholder, uint256 _stakes, uint256 _blockHeight);
+    
+    event stakeRemoved(address _stakeholder, uint256 _stakes, uint256 rewards, uint256 _blockHeight);
+    
+    event rewardsWithdrawn(address _stakeholder, uint256 _rewards, uint256 blockHeight);
 
 }
