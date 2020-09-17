@@ -159,9 +159,7 @@ contract Staking is Ownable, AccessControl {
         rewards[msg.sender] = rewards[msg.sender].add(reward);
         TokenInterface t = TokenInterface(token);
         if(lastWithdraw[msg.sender] == 0) {
-           t.mintTo(msg.sender, reward); 
-           lastWithdraw[msg.sender] = block.number;
-           emit rewardsWithdrawn(msg.sender, reward, block.number);
+           revert("You cannot withdraw if you hve never staked");
         } else if (lastWithdraw[msg.sender] != 0){
             require(block.number > lastWithdraw[msg.sender] + rewardsWindow, "It hasn't been enough time since your last withdrawl");
             t.mintTo(msg.sender, reward);
