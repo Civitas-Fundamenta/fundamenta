@@ -1,17 +1,27 @@
 // SPDX-License-Identifier: MIT
 
+// Author: Matt Hooft 
+// https://github.com/Civitas-Fundamenta
+// mhooft@fundamenta.network
+
+// A simple token Staking Contract that uses a configurable `stakeCap` to limit inflation.
+// Employs the use of Role Based Access Control (RBAC) so allow outside accounts and contracts
+// to interact with it securely allowing for future extensibility.
+
 pragma solidity ^0.7.0;
 
+import "./TokenInterface.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./TokenInterface.sol";
-
 
 contract Staking is Ownable, AccessControl {
 
     using SafeMath for uint256;
-    
+    using SafeERC20 for IERC20;
+
     address public token;
     
     /**
@@ -43,6 +53,12 @@ contract Staking is Ownable, AccessControl {
     mapping(address => uint256) internal rewards;
     mapping(address => uint256) internal lastWithdraw;
     
+    //----------Events----------------------
+    
+    event stakeCreated(address _stakeholder, uint256 _stakes, uint256 _blockHeight);
+    event stakeRemoved(address _stakeholder, uint256 _stakes, uint256 rewards, uint256 _blockHeight);
+    event rewardsWithdrawn(address _stakeholder, uint256 _rewards, uint256 blockHeight);
+    event tokensRescued (address _pebcak, address _ERC20, uint256 _ERC20Amount, uint256 _blockHeightRescued);
 
     //-------Constructor----------------------
 
@@ -159,7 +175,7 @@ contract Staking is Ownable, AccessControl {
         rewards[msg.sender] = rewards[msg.sender].add(reward);
         TokenInterface t = TokenInterface(token);
         if(lastWithdraw[msg.sender] == 0) {
-           revert("You cannot withdraw if you have never staked");
+           revert("You cannot withdraw if you hve never staked");
         } else if (lastWithdraw[msg.sender] != 0){
             require(block.number > lastWithdraw[msg.sender] + rewardsWindow, "It hasn't been enough time since your last withdrawl");
             t.mintTo(msg.sender, reward);
@@ -410,12 +426,15 @@ contract Staking is Ownable, AccessControl {
         paused = _paused;
     }
     
-    //----------Events----------------------
+    //----Emergency PEBCAK Functions-------
     
-    event stakeCreated(address _stakeholder, uint256 _stakes, uint256 _blockHeight);
-    
-    event stakeRemoved(address _stakeholder, uint256 _stakes, uint256 rewards, uint256 _blockHeight);
-    
-    event rewardsWithdrawn(address _stakeholder, uint256 _rewards, uint256 blockHeight);
+    function mistakenERC20DepositRescue(address _ERC20, address _pebcak, uint256 _ERC20Amount) public onlyOwner {
+        IERC20(_ERC20).safeTransfer(_pebcak, _ERC20Amount);
+        emit tokensRescued (_pebcak, _ERC20, _ERC20Amount, block.number);
+    }
+
+    function mistakenDepositRescue(address payable _pebcak, uint256 _etherAmount) public onlyOwner {
+        _pebcak.transfer(_etherAmount);
+    }
 
 }

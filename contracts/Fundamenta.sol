@@ -1,5 +1,14 @@
 // SPDX-License-Identifier: MIT
 
+// Author: Matt Hooft
+// https://github.com/Civitas-Fundamenta
+// mhooft@fundamenta.network
+
+// This is Civitas Fundamenta's implementation of the Fundamenta Token.
+// It utilizes a Role Based Access Control System to allow outside contracts
+// and accounts to interact with it securely providing future extesibility which
+// as you will see is a theme with our smart contracts. 
+
 pragma solidity ^0.7.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -9,7 +18,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/GSN/Context.sol";
 
-contract TESTToken is ERC20, Ownable, AccessControl {
+contract FMTAToken is ERC20, Ownable, AccessControl {
     
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -35,18 +44,36 @@ contract TESTToken is ERC20, Ownable, AccessControl {
    
     uint256 private _cap;
     uint256 public _fundingEmission;
+    uint256 public _team;
+    uint256 public _originalLiquidtyProviders;
     
     //-------Toggle Variables---------------
     
     bool public paused;
     bool public mintDisabled;
     bool public mintToDisabled;
+    
+    //----------Events-----------------------
+    
+    event tokensMinted (uint256 _amount);
+    event tokensMintedTo (address _to, uint256 _amount);
+    event tokensBurned (uint256 _amount, address _burner);
+    event tokensBurnedFrom (address _from, uint256 _amount, address _burner);
+    event supplyCapChanged (uint256 _newCap, address _changedBy);
+    event contractPaused (uint256 _blockHeight, address _pausedBy);
+    event contractUnpaused (uint256 _blockHeight, address _unpausedBy);
+    event mintingEnabled (uint256 _blockHeight, address _enabledBy);
+    event mintingDisabled (uint256 _blockHeight, address _disabledBy);
+    event mintingToEnabled (uint256 _blockHeight, address _enabledBy);
+    event mintingToDisabled (uint256 _blockHeight, address _disabledBy);
    
     //------Token/Admin Constructor---------
     
-    constructor() ERC20("TEST", "TEST") {
-        _fundingEmission = 7.5e24;
-        _cap = 5e25;
+    constructor() ERC20("Fundamenta", "FMTA") {
+        _fundingEmission = 1e25;
+        _team = 5e24;
+        _originalLiquidtyProviders = 3e24;
+        _cap = 1e26;
         mintDisabled = true;
         mintToDisabled = true;
         _mint(msg.sender, _fundingEmission);
@@ -174,27 +201,4 @@ contract TESTToken is ERC20, Ownable, AccessControl {
         }
     }
     
-    //----------Events-----------------------
-    
-    event tokensMinted (uint256 _amount);
-    
-    event tokensMintedTo (address _to, uint256 _amount);
-    
-    event tokensBurned (uint256 _amount, address _burner);
-    
-    event tokensBurnedFrom (address _from, uint256 _amount, address _burner);
-    
-    event supplyCapChanged (uint256 _newCap, address _changedBy);
-    
-    event contractPaused (uint256 _blockHeight, address _pausedBy);
-    
-    event contractUnpaused (uint256 _blockHeight, address _unpausedBy);
-    
-    event mintingEnabled (uint256 _blockHeight, address _enabledBy);
-    
-    event mintingDisabled (uint256 _blockHeight, address _disabledBy);
-    
-    event mintingToEnabled (uint256 _blockHeight, address _enabledBy);
-    
-    event mintingToDisabled (uint256 _blockHeight, address _disabledBy);
 }
