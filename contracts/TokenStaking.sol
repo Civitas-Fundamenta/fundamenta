@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 
 // Author: Matt Hooft 
 // https://github.com/Civitas-Fundamenta
@@ -8,40 +8,41 @@
 // Employs the use of Role Based Access Control (RBAC) so allow outside accounts and contracts
 // to interact with it securely allowing for future extensibility.
 
-pragma solidity ^0.7.0;
+pragma solidity ^0.7.3;
 
 import "./TokenInterface.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-contract Staking is Ownable, AccessControl {
+contract Staking is AccessControl {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-
-    address public token;
+    
+    TokenInterface private fundamenta;  
     
     /**
      * @dev Smart Contract uses Role Based Access Control to 
      * 
      * alllow for secure access as well as enabling the ability 
      *
-     * for other contracts such as oracles to interact with it.
+     * for other contracts such as oracles to interact with ifundamenta.
      */
 
     //-------RBAC---------------------------
 
     bytes32 public constant _STAKING = keccak256("_STAKING");
+    bytes32 public constant _RESCUE = keccak256("_RESCUE");
+    bytes32 public constant _ADMIN = keccak256("_ADMIN");
 
     //-------Staking Vars-------------------
     
-    uint256 public stakeCalc;
-    uint256 public stakeCap;
-    uint256 public rewardsWindow;
-    uint256 public stakeLockMultiplier;
+    uint public stakeCalc;
+    uint public stakeCap;
+    uint public rewardsWindow;
+    uint public stakeLockMultiplier;
     bool public stakingOff;
     bool public paused;
     bool public emergencyWDoff;
@@ -49,23 +50,24 @@ contract Staking is Ownable, AccessControl {
     //--------Staking mapping/Arrays----------
 
     address[] internal stakeholders;
-    mapping(address => uint256) internal stakes;
-    mapping(address => uint256) internal rewards;
-    mapping(address => uint256) internal lastWithdraw;
+    mapping(address => uint) internal stakes;
+    mapping(address => uint) internal rewards;
+    mapping(address => uint) internal lastWithdraw;
     
     //----------Events----------------------
     
-    event stakeCreated(address _stakeholder, uint256 _stakes, uint256 _blockHeight);
-    event stakeRemoved(address _stakeholder, uint256 _stakes, uint256 rewards, uint256 _blockHeight);
-    event rewardsWithdrawn(address _stakeholder, uint256 _rewards, uint256 blockHeight);
-    event tokensRescued (address _pebcak, address _ERC20, uint256 _ERC20Amount, uint256 _blockHeightRescued);
+    event StakeCreated(address _stakeholder, uint _stakes, uint _blockHeight);
+    event StakeRemoved(address _stakeholder, uint _stakes, uint rewards, uint _blockHeight);
+    event RewardsWithdrawn(address _stakeholder, uint _rewards, uint blockHeight);
+    event TokensRescued (address _pebcak, address _ERC20, uint _ERC20Amount, uint _blockHeightRescued);
+    event ETHRescued (address _pebcak, uint _ETHAmount, uint _blockHeightRescued);
 
     //-------Constructor----------------------
 
     constructor(){
         stakingOff = true;
         emergencyWDoff = true;
-        stakeCalc = 1000;
+        stakeCalc = 500;
         stakeCap = 3e22;
         rewardsWindow = 6500;
         stakeLockMultiplier = 2;
@@ -74,24 +76,25 @@ contract Staking is Ownable, AccessControl {
 
     //-------Set Token Address----------------
     
-    function setAddress(address _token) public onlyOwner {
-        token = _token;
+    function setAddress(TokenInterface _token) public {
+        require(hasRole(_ADMIN, msg.sender));
+        fundamenta = _token;
     }
     
     //-------Modifiers--------------------------
 
     modifier pause() {
-        require(!paused, "Contract is Paused");
+        require(!paused, "TokenStaking: Contract is Paused");
         _;
     }
 
     modifier stakeToggle() {
-        require(!stakingOff, "Staking is not currently active");
+        require(!stakingOff, "TokenStaking: Staking is not currently active");
         _;
     }
     
     modifier emergency() {
-        require(!emergencyWDoff, "Emergency Withdraw is not enabled");
+        require(!emergencyWDoff, "TokenStaking: Emergency Withdraw is not enabled");
         _;
     }
 
@@ -107,16 +110,16 @@ contract Staking is Ownable, AccessControl {
      * Role.
      */
 
-    function createStake(uint256 _stake) public pause stakeToggle {
+    function createStake(uint _stake) public pause stakeToggle {
+        require(stakes[msg.sender] <= stakeCap, "TokenStaking: Can't Stake More than allowed moneybags"); 
+        lastWithdraw[msg.sender] = block.number;
+        rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
         if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
-        if(stakes[msg.sender] > stakeCap) {
-            revert("Can't Stake More than allowed moneybags");
-        }
-        TokenInterface t = TokenInterface(token);
-        t.burnFrom(msg.sender, _stake);
+        fundamenta.mintTo(msg.sender, rewardsAccrued());
+        fundamenta.burnFrom(msg.sender, _stake);
         lastWithdraw[msg.sender] = block.number;
-        emit stakeCreated(msg.sender, _stake, block.number);
+        emit StakeCreated(msg.sender, _stake, block.number);
     }
     
     /**
@@ -127,24 +130,25 @@ contract Staking is Ownable, AccessControl {
      * the user if any rewards are pending.
      */
     
-    function removeStake(uint256 _stake) public pause {
-        if(stakes[msg.sender] == 0 && _stake != 0 ) 
-        revert("You don't have any tokens staked");
-        uint256 unlockWindow = rewardsWindow.mul(stakeLockMultiplier);
-        require(block.number >= lastWithdraw[msg.sender].add(unlockWindow), "FMTA has not been staked for long enough");
-        TokenInterface t = TokenInterface(token);
-        uint256 _rewardsAccrued;
-        uint256 multiplier;
-        multiplier = block.number.sub(lastWithdraw[msg.sender]).div(rewardsWindow);
-        _rewardsAccrued = calculateReward(msg.sender).mul(multiplier);
-        t.mintTo(msg.sender, _rewardsAccrued);
-        stakes[msg.sender] = stakes[msg.sender].sub(_stake);
-        if(stakes[msg.sender] == 0) {
+    function removeStake(uint _stake) public pause {
+        uint unlockWindow = rewardsWindow.mul(stakeLockMultiplier);
+        require(block.number >= lastWithdraw[msg.sender].add(unlockWindow), "TokenStaking: FMTA has not been staked for long enough");
+        rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
+        if(stakes[msg.sender] == 0 && _stake != 0 ) {
+            revert("TokenStaking: You don't have any tokens staked");
+        }else if (stakes[msg.sender] != 0 && _stake != 0) {
+            fundamenta.mintTo(msg.sender, rewardsAccrued());
+            fundamenta.mintTo(msg.sender, _stake);
+            stakes[msg.sender] = stakes[msg.sender].sub(_stake);
+            lastWithdraw[msg.sender] = block.number;
+        }else if (stakes[msg.sender] == 0) {
+            fundamenta.mintTo(msg.sender, rewardsAccrued());
+            fundamenta.mintTo(msg.sender, _stake);
+            stakes[msg.sender] = stakes[msg.sender].sub(_stake);
             removeStakeholder(msg.sender);
-            t.mintTo(msg.sender, _stake);
-            emit stakeRemoved(msg.sender, _stake, _rewardsAccrued, block.number);
-            
+            lastWithdraw[msg.sender] = block.number;
         }
+        emit StakeRemoved(msg.sender, _stake, rewardsAccrued(), block.number);
         
     }
     
@@ -152,9 +156,9 @@ contract Staking is Ownable, AccessControl {
      * @dev returns the amount of rewards a user as accrued.
      */
     
-    function rewardsAccrued() public view returns (uint256) {
-        uint256 _rewardsAccrued;
-        uint256 multiplier;
+    function rewardsAccrued() public view returns (uint) {
+        uint _rewardsAccrued;
+        uint multiplier;
         multiplier = block.number.sub(lastWithdraw[msg.sender]).div(rewardsWindow);
         _rewardsAccrued = calculateReward(msg.sender).mul(multiplier);
         return _rewardsAccrued;
@@ -168,19 +172,14 @@ contract Staking is Ownable, AccessControl {
      */
      
     function withdrawReward() public pause stakeToggle {
-        uint256 reward;
-        uint256 multiplier;
-        multiplier = block.number.sub(lastWithdraw[msg.sender]).div(rewardsWindow);
-        reward = calculateReward(msg.sender).mul(multiplier);
-        rewards[msg.sender] = rewards[msg.sender].add(reward);
-        TokenInterface t = TokenInterface(token);
+        rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
         if(lastWithdraw[msg.sender] == 0) {
-           revert("You cannot withdraw if you hve never staked");
+           revert("TokenStaking: You cannot withdraw if you hve never staked");
         } else if (lastWithdraw[msg.sender] != 0){
-            require(block.number > lastWithdraw[msg.sender] + rewardsWindow, "It hasn't been enough time since your last withdrawl");
-            t.mintTo(msg.sender, reward);
+            require(block.number > lastWithdraw[msg.sender].add(rewardsWindow), "TokenStaking: It hasn't been enough time since your last withdrawl");
+            fundamenta.mintTo(msg.sender, rewardsAccrued());
             lastWithdraw[msg.sender] = block.number;
-            emit rewardsWithdrawn(msg.sender, reward, block.number);
+            emit RewardsWithdrawn(msg.sender, rewardsAccrued(), block.number);
         }
     }
     
@@ -194,19 +193,12 @@ contract Staking is Ownable, AccessControl {
      * the contract is paused.  This will likely never be used.
      */
     
-    function emergencyWithdrawRewardAndStakes(uint256 _stake) public emergency {
-        TokenInterface t = TokenInterface(token);
-        uint256 _rewardsAccrued;
-        uint256 multiplier;
-        multiplier = block.number.sub(lastWithdraw[msg.sender]).div(rewardsWindow);
-        _rewardsAccrued = calculateReward(msg.sender).mul(multiplier);
-        t.mintTo(msg.sender, _rewardsAccrued);
-        stakes[msg.sender] = stakes[msg.sender].sub(_stake);
-        if(stakes[msg.sender] == 0) {
-            removeStakeholder(msg.sender);
-            t.mintTo(msg.sender, _stake);
-            
-        }
+    function emergencyWithdrawRewardAndStakes() public emergency {
+        rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
+        fundamenta.mintTo(msg.sender, rewardsAccrued());
+        fundamenta.mintTo(msg.sender, stakes[msg.sender]);
+        stakes[msg.sender] = stakes[msg.sender].sub(stakes[msg.sender]);
+        removeStakeholder(msg.sender);
     }
     
     /**
@@ -215,7 +207,7 @@ contract Staking is Ownable, AccessControl {
      * height that the user last withdrew rewards.
      */
     
-    function lastWdHeight() public view returns (uint256) {
+    function lastWdHeight() public view returns (uint) {
         return lastWithdraw[msg.sender];
     }
     
@@ -227,9 +219,9 @@ contract Staking is Ownable, AccessControl {
      * positon.
      */
     
-    function stakeUnlockWindow() external view returns (uint256) {
-        uint256 unlockWindow = rewardsWindow.mul(stakeLockMultiplier);
-        uint256 stakeWindow = lastWithdraw[msg.sender].add(unlockWindow);
+    function stakeUnlockWindow() external view returns (uint) {
+        uint unlockWindow = rewardsWindow.mul(stakeLockMultiplier);
+        uint stakeWindow = lastWithdraw[msg.sender].add(unlockWindow);
         return stakeWindow;
     }
     
@@ -243,7 +235,7 @@ contract Staking is Ownable, AccessControl {
      * before they are able to unstake said positon.
      */
     
-    function setStakeMultiplier(uint256 _newMultiplier) public pause stakeToggle {
+    function setStakeMultiplier(uint _newMultiplier) public pause stakeToggle {
         require(hasRole(_STAKING, msg.sender));
         stakeLockMultiplier = _newMultiplier;
     }
@@ -252,7 +244,7 @@ contract Staking is Ownable, AccessControl {
      * @dev returns a users staked position.
      */
     
-    function stakeOf (address _stakeholder) public view returns(uint256) {
+    function stakeOf (address _stakeholder) public view returns(uint) {
         return stakes[_stakeholder];
     }
     
@@ -262,9 +254,9 @@ contract Staking is Ownable, AccessControl {
      * placed in staking postions by users.
      */
     
-    function totalStakes() public view returns(uint256) {
-        uint256 _totalStakes = 0;
-        for (uint256 s = 0; s < stakeholders.length; s += 1) {
+    function totalStakes() public view returns(uint) {
+        uint _totalStakes = 0;
+        for (uint s = 0; s < stakeholders.length; s += 1) {
             _totalStakes = _totalStakes.add(stakes[stakeholders[s]]);
         }
         
@@ -277,8 +269,8 @@ contract Staking is Ownable, AccessControl {
      * a staked position.
      */
 
-    function isStakeholder(address _address) public view returns(bool, uint256) {
-        for (uint256 s = 0; s < stakeholders.length; s += 1) {
+    function isStakeholder(address _address) public view returns(bool, uint) {
+        for (uint s = 0; s < stakeholders.length; s += 1) {
             if (_address == stakeholders[s]) return (true, s);
         }
         
@@ -299,7 +291,7 @@ contract Staking is Ownable, AccessControl {
      */
     
     function removeStakeholder(address _stakeholder) internal {
-        (bool _isStakeholder, uint256 s) = isStakeholder(_stakeholder);
+        (bool _isStakeholder, uint s) = isStakeholder(_stakeholder);
         if(_isStakeholder){
             stakeholders[s] = stakeholders[stakeholders.length - 1];
             stakeholders.pop();
@@ -312,7 +304,7 @@ contract Staking is Ownable, AccessControl {
      * Staking Contracts lifetime.
      */
     
-    function rewardOf(address _stakeholder) external view returns(uint256) {
+    function totalRewardsOf(address _stakeholder) external view returns(uint) {
         return rewards[_stakeholder];
     }
     
@@ -322,9 +314,9 @@ contract Staking is Ownable, AccessControl {
      * accounts over the Staking Contracts lifetime.
      */
     
-    function totalRewardsPaid() external view returns(uint256) {
-        uint256 _totalRewards = 0;
-        for (uint256 s = 0; s < stakeholders.length; s += 1){
+    function totalRewardsPaid() external view returns(uint) {
+        uint _totalRewards = 0;
+        for (uint s = 0; s < stakeholders.length; s += 1){
             _totalRewards = _totalRewards.add(rewards[stakeholders[s]]);
         }
         
@@ -351,7 +343,7 @@ contract Staking is Ownable, AccessControl {
      * 
      * Staking Contracts `stakeCap` which determines how many
      * 
-     * tokens total can be staked per account.
+     * tokens total can be staked per accounfundamenta.
      */
     
     function setStakeCap(uint _stakeCap) external pause stakeToggle {
@@ -386,7 +378,7 @@ contract Staking is Ownable, AccessControl {
      * `lastWithdraw`.
      */
     
-    function setRewardsWindow(uint256 _newWindow) external pause stakeToggle {
+    function setRewardsWindow(uint _newWindow) external pause stakeToggle {
         require(hasRole(_STAKING, msg.sender));
         rewardsWindow = _newWindow;
     }
@@ -399,7 +391,7 @@ contract Staking is Ownable, AccessControl {
      * is settable by admins with the `_STAKING` role.
      */
     
-    function calculateReward(address _stakeholder) public view returns(uint256) {
+    function calculateReward(address _stakeholder) public view returns(uint) {
         return stakes[_stakeholder] / stakeCalc;
     }
     
@@ -411,7 +403,8 @@ contract Staking is Ownable, AccessControl {
      * unforseeable reason and we still need to let users withdraw.
      */
     
-    function setEmergencyWDoff(bool _emergencyWD) external onlyOwner {
+    function setEmergencyWDoff(bool _emergencyWD) external {
+        require(hasRole(_ADMIN, msg.sender));
         emergencyWDoff = _emergencyWD;
     }
     
@@ -422,19 +415,23 @@ contract Staking is Ownable, AccessControl {
      * @dev pauses the Smart Contract.
      */
 
-    function setPaused(bool _paused) external onlyOwner {
+    function setPaused(bool _paused) external {
+        require(hasRole(_ADMIN, msg.sender));
         paused = _paused;
     }
     
     //----Emergency PEBCAK Functions-------
     
-    function mistakenERC20DepositRescue(address _ERC20, address _pebcak, uint256 _ERC20Amount) public onlyOwner {
+    function mistakenERC20DepositRescue(address _ERC20, address _pebcak, uint _ERC20Amount) public {
+        require(hasRole(_RESCUE, msg.sender),"TokenStaking: Message Sender must be _RESCUE");
         IERC20(_ERC20).safeTransfer(_pebcak, _ERC20Amount);
-        emit tokensRescued (_pebcak, _ERC20, _ERC20Amount, block.number);
+        emit TokensRescued (_pebcak, _ERC20, _ERC20Amount, block.number);
     }
 
-    function mistakenDepositRescue(address payable _pebcak, uint256 _etherAmount) public onlyOwner {
+    function mistakenDepositRescue(address payable _pebcak, uint _etherAmount) public {
+        require(hasRole(_RESCUE, msg.sender),"TokenStaking: Message Sender must be _RESCUE");
         _pebcak.transfer(_etherAmount);
+        emit ETHRescued (_pebcak, _etherAmount, block.number);
     }
 
 }
