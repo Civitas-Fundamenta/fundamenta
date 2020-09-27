@@ -10,13 +10,12 @@
 
 pragma solidity ^0.7.0;
 
-import "./Ownable.sol";
-import "./AccessControl.sol";
-import "./SafeMath.sol";
 import "./TokenInterface.sol";
-import "./IERC20.sol";
-import "./SafeERC20.sol";
-
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract Staking is Ownable, AccessControl {
 
