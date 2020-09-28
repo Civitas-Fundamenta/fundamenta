@@ -26,11 +26,8 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     /**
      * @dev Token uses Role Based Access Control to 
-     * 
      * alllow for secure access as well as enabling the ability 
-     *
      * for other contracts such as oracles and supply mechanisms
-     * 
      * to interact with it.
      */
     
@@ -45,7 +42,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     uint256 private _cap;
     uint256 public _fundingEmission;
     uint256 public _team;
-    uint256 public _originalLiquidtyProviders;
+    uint256 public _originalLiquidityProviders;
     
     //-------Toggle Variables---------------
     
@@ -72,19 +69,19 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     constructor() ERC20("Fundamenta", "FMTA") {
         _fundingEmission = 1e25;
         _team = 5e24;
-        _originalLiquidtyProviders = 3e24;
+        _originalLiquidityProviders = 3e24;
         _cap = 1e26;
+        _mint(msg.sender, _fundingEmission);
+        _mint(msg.sender, _team);
+        _mint(msg.sender, _originalLiquidityProviders);
         mintDisabled = true;
         mintToDisabled = true;
-        _mint(msg.sender, _fundingEmission);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
     
     /**
      * @dev functions used to toggle contract states.
-     * 
      * Includes disabling or enabling minting and 
-     * 
      * pausing of the contract
      */
 
@@ -139,9 +136,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     /**
      * @dev token funtions require role based access to 
-     * 
      * execute.  This gives us the ability to allow outside 
-     *
      * interaction with the token contract securely.
      */
     
@@ -174,9 +169,7 @@ contract FMTAToken is ERC20, Ownable, AccessControl {
     
     /**
      * @dev tokens supply cap is configureable and also 
-     * 
      * leverages RBAC to allow outside mechanisms like  
-     *
      * oracles to interact with it securely.
      */
 
