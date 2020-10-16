@@ -7,8 +7,12 @@
 // This is a token vesting contract that can add multiple beneficiaries.  It uses
 // Unix timestamps to keep track of release times and only the beneficiary is 
 // allowed to remove the tokens.  For emergency purposes the ability to change the 
-// beneficiary address has been added as well as the ability for the contract owner 
-// to recover Ether and ERC20 tokens that are mistakenly deposited to the conract.
+// beneficiary address has been added as well as the ability for users with the  
+// proper roles to recover Ether and ERC20 tokens that are mistakenly deposited 
+// to the conract. The required roles will only be granted/used if/when needed
+// with community consent. Until then no users will be granted the roles capable
+// of token movement.  This is a comprimise to allow recovery of tokens/ether 
+// that are sent to the contract by mistake.
 
 pragma solidity ^0.7.3;
 
@@ -23,7 +27,9 @@ contract Vesting is AccessControl {
     
     //-----------RBAC--------------
     
-    bytes32 private constant _ADMIN = keccak256("_ADMIN");
+    bytes32 public constant _ADMIN = keccak256("_ADMIN");
+    bytes32 public constant _MOVE = keccak256("_MOVE");
+    bytes32 public constant _RESCUE = keccak256("_RESCUE");
     
     //---------Interface-----------
     
@@ -160,13 +166,13 @@ contract Vesting is AccessControl {
      */
 
     function mistakenERC20DepositRescue(address _ERC20, address _pebcak, uint _ERC20Amount) public {
-        require(hasRole(_ADMIN, msg.sender));
+        require(hasRole(_MOVE, msg.sender));
         IERC20(_ERC20).safeTransfer(_pebcak, _ERC20Amount);
         emit tokensRescued (_pebcak, _ERC20, _ERC20Amount, block.number);
     }
 
     function mistakenDepositRescue(address payable _pebcak, uint _etherAmount) public {
-        require(hasRole(_ADMIN, msg.sender));
+        require(hasRole(_RESCUE, msg.sender));
         _pebcak.transfer(_etherAmount);
     }
 

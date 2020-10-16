@@ -78,7 +78,7 @@ contract FMTAToken is ERC20, AccessControl {
         _mint(msg.sender, _originalLiquidityProviders);
         _mint(0x458FD3022bBBe2fb66625dE58db668d2d523c222, 1.8e22); // 10% of total share of tokens for original liquidity providers are unlocked.
         _mint(0x56aAf8Bb0e5E52E414FD530eac2DFcCc9cAa349b, 4.6e22); // The Majority will be locked in a Vesting Contract located at the address
-        _mint(0x223478514F46a1788aB86c78C431F7882fD53Af5, 3.36e23) //  . Team Tokens are locked in the same Vesting contract. 
+        _mint(0x223478514F46a1788aB86c78C431F7882fD53Af5, 3.36e23); //  . Team Tokens are locked in the same Vesting contract. 
         mintDisabled = true;
         mintToDisabled = true;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);

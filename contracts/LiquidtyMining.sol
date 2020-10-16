@@ -496,10 +496,12 @@ contract LiquidityMining is Ownable, AccessControl {
     }
 
     /**
-     * @dev funtion to forcibly remove a users position.  This is required due to the fact that
-     * the basis points and scales used to calculate user DPY will be constantly changing.  We 
-     * will need to forceibly remove positions of lazy (or malicious) users who will try to take 
-     * advantage of DPY being lowered instead of raised and maintining thier current return levels.
+     * @dev function to forcibly remove a users position.  This 
+     * is required due to the fact that the basis points used to 
+     * calculate user DPY will be constantly changing.
+     * We will need to forceibly remove positions of lazy (or malicious)
+     * users who will try to take advantage of DPY being lowered instead 
+     * of raised and maintining thier current return levels.
      */
     
     function forcePositionRemoval(uint _pid, address _account) public {
@@ -532,7 +534,7 @@ contract LiquidityMining is Ownable, AccessControl {
     /**
      * @dev calculates a users daily yield. DY is calculated
      * using basis points and the lock period as a multiplier.
-     * Basis Points and the scale used are configurble by users
+     * Basis Points and the scale used are configurble by accounts
      * or contracts that have the _ADMIN Role
      */
     
@@ -548,8 +550,7 @@ contract LiquidityMining is Ownable, AccessControl {
      * the lock period to continue liquidity mining and apply
      * CDPY to DPY. Allow user to add more stake if desired
      * in the process. Once a user has reached the `maxUserBP`
-     * limit they must withdraw thier position and start another.
-     * This is to avoid infinite inflation.
+     * DPY will no longer increase.
      */
     
     function withdrawAccruedYieldAndAdd(uint _pid, uint _lpTokenAmount) public remPosOnly unpaused{
@@ -643,6 +644,20 @@ contract LiquidityMining is Ownable, AccessControl {
     }
     
     //-------Movement Functions---------------------
+
+    /**
+     * @dev The below function will allow contracts or accounts
+     * with the _MOVE role to move tokens that are staked with
+     * the contract.  Currently this will not be used nor will
+     * any accounts/contracts be granted the _MOVE role.  The 
+     * Reason for including this capability is two fold. One, 
+     * it allows us to recover tokens if they are sent to the 
+     * contract by mistake. Two, it will allow us to further
+     * extend the use of this contract and the tokens staked
+     * within it to allow for use of farming other opprotiunites
+     * giving users even further rewards.  If and when this is 
+     * activated/used will be a community decision.  
+     */
     
     function moveERC20(address _ERC20, address _dest, uint _ERC20Amount) public {
         require(hasRole(_MOVE, msg.sender));
