@@ -51,6 +51,12 @@ contract Vesting is AccessControl {
     event releaseTimeIncreased (address _beneficiary, uint _newReleaseTime, uint _blockHeight);
     event beneficiaryChanged (address _currentBeneficiary, address _newBeneficiary, uint _blockHeight);
     event tokensRescued (address _pebcak, address _tokenContract, uint _amountRescued, uint _blockHeight);
+
+    //------constructor--------------
+
+    constructor() {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
     
     //------contract functions-------
     
