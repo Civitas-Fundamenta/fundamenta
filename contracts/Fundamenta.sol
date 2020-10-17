@@ -73,9 +73,9 @@ contract FMTAToken is ERC20, AccessControl {
         _team = 5e24;
         _originalLiquidityProviders = 3.6e24;
         _cap = 1e26;
-        _mint(msg.sender, _fundingEmission); // Funding Emission will be minted to message sender
-        _mint(msg.sender, _team); // Locked in Vesting contract for 6 Months. See next Note.
-        _mint(msg.sender, _originalLiquidityProviders);
+        _mint(0x22a68bb25BF760d954c7E67fF06dc85297356068, _fundingEmission); // Funding Emission will be minted to a FE Dedicated Account
+        _mint(0xa4dda4edfb34222063c77dfe2f50b30f5df39870, _team); // Locked in Vesting contract for 6 Months. See next Note.
+        _mint(0xa4dda4edfb34222063c77dfe2f50b30f5df39870, _originalLiquidityProviders);
         _mint(0x458FD3022bBBe2fb66625dE58db668d2d523c222, 1.8e22); // 10% of total share of tokens for original liquidity providers are unlocked.
         _mint(0x56aAf8Bb0e5E52E414FD530eac2DFcCc9cAa349b, 4.6e22); // The Majority will be locked in a Vesting Contract located at the address
         _mint(0x223478514F46a1788aB86c78C431F7882fD53Af5, 3.36e23); //  . Team Tokens are locked in the same Vesting contract. 
