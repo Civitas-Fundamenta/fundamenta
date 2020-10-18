@@ -508,11 +508,11 @@ contract LiquidityMining is Ownable, AccessControl {
         require(hasRole(_REMOVAL, msg.sender));
         LiquidityProviders storage p = provider[_pid][_account];
         PoolInfo storage pool = poolInfo[_pid];
+        uint yield = p.LockedAmount.mul(p.UserBP.add(pool.PoolBonus)).div(lockPeriodBPScale).mul(p.Days);
+        fundamenta.mintTo(_account, yield);
         uint _lpTokenAmount = p.LockedAmount;
         pool.ContractAddress.safeTransfer(_account, _lpTokenAmount);
         uint _newLpTokenAmount = p.LockedAmount.sub(_lpTokenAmount);
-        uint yield = calculateUserDailyYield(_pid);
-        fundamenta.mintTo(msg.sender, yield);
         provider[_pid][_account] = LiquidityProviders (
             _account, 
             0, 
