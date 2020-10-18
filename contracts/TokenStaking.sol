@@ -111,13 +111,13 @@ contract Staking is AccessControl {
      */
 
     function createStake(uint _stake) public pause stakeToggle {
-        require(stakes[msg.sender] <= stakeCap, "TokenStaking: Can't Stake More than allowed moneybags"); 
         lastWithdraw[msg.sender] = block.number;
         rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
         if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
         fundamenta.mintTo(msg.sender, rewardsAccrued());
         fundamenta.burnFrom(msg.sender, _stake);
+        require(stakes[msg.sender] <= stakeCap, "TokenStaking: Can't Stake More than allowed moneybags"); 
         lastWithdraw[msg.sender] = block.number;
         emit StakeCreated(msg.sender, _stake, block.number);
     }
