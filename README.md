@@ -7,7 +7,7 @@ Civitas Fundamenta and the Fundamenta token are a new take on capital and projec
 The Contracts for Liquidity Mining, Token Staking, Vesting and the Token itself can be found at:
 - Token: https://etherscan.io/address/0xaa9d866666c2a3748d6b23ff69e63e52f08d9ab4
 - Liquidity Mining: https://etherscan.io/address/0xb187c8e40b46ae8fc19a6cc24bb60320a73b9abd
-- Token Staking: https://etherscan.io/address/0x5fc32b4ae08010bb332f0d42fa24ff81a7c7a501
+- Token Staking: https://etherscan.io/address/0x4d1c6fe8cce907ac9d884b7562452467f5c7ea3f
 - Vesting: https://etherscan.io/address/0xa4dda4edfb34222063c77dfe2f50b30f5df39870
 
 
