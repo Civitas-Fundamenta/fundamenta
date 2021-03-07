@@ -4,34 +4,6 @@
 // https://github.com/Civitas-Fundamenta
 // mhooft@fundamenta.network)
 
-// This is a Liquidty Mining Contract that will allow users to deposit or "stake" Liquidty Pool Tokens to 
-// earn rewards in the form of the FMTA Token. It is designed to be highly configurable so it can adapt to market
-// and ecosystem conditions overtime. Liqudidty pools must be added by the conract owner and only added Tokens
-// will be eleigible for rewards.  This also uses Role Based Access Control (RBAC) to allow other accounts and contracts
-// (such as oracles) to function as `_ADMIN` allowing them to securly interact with the contract and providing possible 
-// future extensibility.
-
-// Liquidity Providers will earn rewards based on a Daily Percentage Yield (DPY) and will be able to compound thier positions
-// to increase thier DPY based on a configurable factor (Compunding Daily Percentage Yield or CDPY). Liquidity Providers will 
-// have a choice of three lock periods to choose from all with different CDPY factors.
-
-// For example lets use 7, 14 and 21 as our choices for lock periods and have our user Stake 1000 LP Tokens: 
-
-// LP Tokens Staked = 1000
-// 7 days = DPY of 10% and CDPY of 0.5%, 
-// 14 days  = DPY of 12% and CDPY of 0.75%
-// 21 days = DPY of 15% and CDPY of 1.15%. 
-
-// 7 Day Return = 700 FMTA
-// 14 Day Return = 1680 FMTA
-// 21 Day Return = 3150 FMTA
-
-// DPY after CDPY is applied if users do not remove positions and just remove accrued DPY:
-
-// 7 Day DPY = 10.5%
-// 14 Day DPY = 12.75%
-// 21 Day DPY = 16.15%
-
 pragma solidity ^0.7.3;
 
 import "./TokenInterface.sol";
