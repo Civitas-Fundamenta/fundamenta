@@ -188,4 +188,3 @@ contract FMTAToken is ERC20, AccessControl {
     }
     
 }
-
