@@ -305,15 +305,16 @@ contract LiquidityMining is Ownable, AccessControl {
      * @dev function to show current lock periods.
      */
     
-    function showCurrentLockPeriods() external view returns (
+    function showCurrentLockPeriods(uint _pid) external view returns (
         uint _lockPeriod0, 
         uint _lockPeriod1, 
         uint _lockPeriod2
     ) {
+        PoolInfo memory pool = poolInfo[_pid];
         return (
-            lockPeriod0, 
-            lockPeriod1, 
-            lockPeriod2
+            pool.lockPeriod0, 
+            pool.lockPeriod1, 
+            pool.lockPeriod2
         );
     }
     
