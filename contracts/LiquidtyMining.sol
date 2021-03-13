@@ -334,12 +334,13 @@ contract LiquidityMining is Ownable, AccessControl {
      * @dev allows accounts with the _ADMIN role to set new lock periods.
      */
     
-    function setLockPeriods(uint _newPeriod0, uint _newPeriod1, uint _newPeriod2) public {
+    function setLockPeriods(uint _newPeriod0, uint _newPeriod1, uint _newPeriod2, uint _pid) public {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
         require(_newPeriod2 > _newPeriod1 && _newPeriod1 > _newPeriod0);
-        lockPeriod0 = _newPeriod0;
-        lockPeriod1 = _newPeriod1;
-        lockPeriod2 = _newPeriod2;
+        PoolInfo storage pool = poolInfo[_pid];
+        pool.lockPeriod0 = _newPeriod0;
+        pool.lockPeriod1 = _newPeriod1;
+        pool.lockPeriod2 = _newPeriod2;
     }
     
     /**
