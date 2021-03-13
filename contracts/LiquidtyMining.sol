@@ -94,12 +94,15 @@ contract LiquidityMining is Ownable, AccessControl {
         uint TotalRewardsPaidByPool;
         uint TotalLPTokensLocked;
         uint PoolBonus;
-        //uint lockPeriod0BasisPoint;
-        //uint lockPeriod1BasisPoint;
-        //uint lockPeriod2BasisPoint;
-        //uint compYield0;
-        //uint compYield1;
-        //uint compYield2;
+        uint lockPeriod0BasisPoint;
+        uint lockPeriod1BasisPoint;
+        uint lockPeriod2BasisPoint;
+        uint compYield0;
+        uint compYield1;
+        uint compYield2;
+        uint lockPeriod0;
+        uint lockPeriod1;
+        uint lockPeriod2;
     }
     
     /**
@@ -137,17 +140,17 @@ contract LiquidityMining is Ownable, AccessControl {
     constructor() {
         periodCalc = 6500;
         lockPeriodBPScale = 10000;
-        lockPeriod0BasisPoint = 1000;
-        lockPeriod1BasisPoint = 1500;
-        lockPeriod2BasisPoint = 2000;
+        //lockPeriod0BasisPoint = 1000;
+        //lockPeriod1BasisPoint = 1500;
+        //lockPeriod2BasisPoint = 2000;
         preYieldDivisor = 2;
         maxUserBP = 3500;
-        compYield0 = 50;
-        compYield1 = 75;
-        compYield2 = 125;
-        lockPeriod0 = 3;
-        lockPeriod1 = 7;
-        lockPeriod2 = 14;
+        //compYield0 = 50;
+        //compYield1 = 75;
+        //compYield2 = 125;
+        //lockPeriod0 = 3;
+        //lockPeriod1 = 7;
+        //lockPeriod2 = 14;
         removePositionOnly = false;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender); //God Mode. DEFAULT_ADMIN_ROLE Must Require _ADMIN ROLE Sill to execute _ADMIN functions.
     }
@@ -198,13 +201,22 @@ contract LiquidityMining is Ownable, AccessControl {
      * zero value if called.
      */
     
-    function addLiquidtyPoolToken(IERC20 _lpTokenAddress, uint _bonus) public {
+    function addLiquidtyPoolToken(IERC20 _lpTokenAddress, uint _bonus, uint _lpbp0, uint _lpbp1, uint _lpbp2, uint _cy0, uint _cy1, uint _cy2, uint _lockP0, uint _lockP1, uint _lockP2) public {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
         poolInfo.push(PoolInfo({
             ContractAddress: _lpTokenAddress,
             TotalRewardsPaidByPool: 0,
             TotalLPTokensLocked: 0,
-            PoolBonus: _bonus
+            PoolBonus: _bonus,
+            lockPeriod0BasisPoint: _lpbp0,
+            lockPeriod1BasisPoint: _lpbp1,
+            lockPeriod2BasisPoint: _lpbp2,
+            compYield0: _cy0,
+            compYield1: _cy1,
+            compYield2: _cy2,
+            lockPeriod0: _lockP0,
+            lockPeriod1: _lockP1,
+            lockPeriod2: _lockP2
         }));
   
     }
