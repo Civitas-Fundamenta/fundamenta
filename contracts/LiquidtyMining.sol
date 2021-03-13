@@ -43,10 +43,6 @@ contract LiquidityMining is Ownable, AccessControl {
     uint private lockPeriod1;
     uint private lockPeriod2;
     
-    uint private lockPeriod0BasisPoint;
-    uint private lockPeriod1BasisPoint;
-    uint private lockPeriod2BasisPoint;
-    
     uint private compYield0;
     uint private compYield1;
     uint private compYield2;
@@ -409,13 +405,13 @@ contract LiquidityMining is Ownable, AccessControl {
         require(p.LockedAmount == 0, "LiquidityMining: This account already has a position");
         if(_lockPeriod == lockPeriod0) {
             pool.ContractAddress.safeTransferFrom(msg.sender, ca, _lpTokenAmount);
-            uint _preYield = _lpTokenAmount.mul(lockPeriod0BasisPoint.add(pool.PoolBonus)).div(lockPeriodBPScale).mul(_lockPeriod);
+            uint _preYield = _lpTokenAmount.mul(pool.lockPeriod0BasisPoint.add(pool.PoolBonus)).div(lockPeriodBPScale).mul(_lockPeriod);
             provider[_pid][msg.sender] = LiquidityProviders (
                 msg.sender, 
                 block.number.add(periodCalc.mul(lockPeriod0)), 
                 _lpTokenAmount, 
                 lockPeriod0, 
-                lockPeriod0BasisPoint,
+                pool.lockPeriod0BasisPoint,
                 p.TotalRewardsPaid.add(_preYield.div(preYieldDivisor))
             );
             fundamenta.mintTo(msg.sender, _preYield.div(preYieldDivisor));
@@ -423,13 +419,13 @@ contract LiquidityMining is Ownable, AccessControl {
             pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(_preYield.div(preYieldDivisor));
         } else if (_lockPeriod == lockPeriod1) {
             pool.ContractAddress.safeTransferFrom(msg.sender, ca, _lpTokenAmount);
-            uint _preYield = _lpTokenAmount.mul(lockPeriod1BasisPoint.add(pool.PoolBonus)).div(lockPeriodBPScale).mul(_lockPeriod);
+            uint _preYield = _lpTokenAmount.mul(pool.lockPeriod1BasisPoint.add(pool.PoolBonus)).div(lockPeriodBPScale).mul(_lockPeriod);
             provider[_pid][msg.sender] = LiquidityProviders (
                 msg.sender, 
                 block.number.add(periodCalc.mul(lockPeriod1)), 
                 _lpTokenAmount, 
                 lockPeriod1, 
-                lockPeriod1BasisPoint,
+                pool.lockPeriod1BasisPoint,
                 p.TotalRewardsPaid.add(_preYield.div(preYieldDivisor))
             );
             fundamenta.mintTo(msg.sender, _preYield.div(preYieldDivisor));
@@ -437,13 +433,13 @@ contract LiquidityMining is Ownable, AccessControl {
             pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(_preYield.div(preYieldDivisor));
         } else if (_lockPeriod == lockPeriod2) {
             pool.ContractAddress.safeTransferFrom(msg.sender, ca, _lpTokenAmount);
-            uint _preYield = _lpTokenAmount.mul(lockPeriod2BasisPoint.add(pool.PoolBonus)).div(lockPeriodBPScale).mul(_lockPeriod);
+            uint _preYield = _lpTokenAmount.mul(pool.lockPeriod2BasisPoint.add(pool.PoolBonus)).div(lockPeriodBPScale).mul(_lockPeriod);
             provider[_pid][msg.sender] = LiquidityProviders (
                 msg.sender, 
                 block.number.add(periodCalc.mul(lockPeriod2)), 
                 _lpTokenAmount, 
                 lockPeriod2, 
-                lockPeriod2BasisPoint,
+                pool.lockPeriod2BasisPoint,
                 p.TotalRewardsPaid.add(_preYield.div(preYieldDivisor))
             );
             fundamenta.mintTo(msg.sender, _preYield.div(preYieldDivisor));
