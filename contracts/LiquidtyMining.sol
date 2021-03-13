@@ -138,19 +138,13 @@ contract LiquidityMining is Ownable, AccessControl {
     constructor() {
         periodCalc = 6500;
         lockPeriodBPScale = 10000;
-        //lockPeriod0BasisPoint = 1000;
-        //lockPeriod1BasisPoint = 1500;
-        //lockPeriod2BasisPoint = 2000;
         preYieldDivisor = 2;
         maxUserBP = 3500;
-        //compYield0 = 50;
-        //compYield1 = 75;
-        //compYield2 = 125;
         lockPeriod0 = 5;
         lockPeriod1 = 10;
         lockPeriod2 = 15;
         removePositionOnly = false;
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender); //God Mode. DEFAULT_ADMIN_ROLE Must Require _ADMIN ROLE Sill to execute _ADMIN functions.
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender); //God Mode. DEFAULT_ADMIN_ROLE Must Require _ADMIN ROLE Still to execute _ADMIN functions.
     }
      
      //------------State modifiers---------------------
