@@ -100,9 +100,7 @@ contract LiquidityMining is Ownable, AccessControl {
         uint compYield0;
         uint compYield1;
         uint compYield2;
-        uint lockPeriod0;
-        uint lockPeriod1;
-        uint lockPeriod2;
+        uint maxPoolBP;
     }
     
     /**
@@ -148,9 +146,9 @@ contract LiquidityMining is Ownable, AccessControl {
         //compYield0 = 50;
         //compYield1 = 75;
         //compYield2 = 125;
-        //lockPeriod0 = 3;
-        //lockPeriod1 = 7;
-        //lockPeriod2 = 14;
+        lockPeriod0 = 5;
+        lockPeriod1 = 10;
+        lockPeriod2 = 15;
         removePositionOnly = false;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender); //God Mode. DEFAULT_ADMIN_ROLE Must Require _ADMIN ROLE Sill to execute _ADMIN functions.
     }
@@ -209,10 +207,8 @@ contract LiquidityMining is Ownable, AccessControl {
         uint _lpbp2, 
         uint _cy0, 
         uint _cy1, 
-        uint _cy2, 
-        uint _lockP0, 
-        uint _lockP1, 
-        uint _lockP2) public {
+        uint _cy2,
+        uint _mbp) public {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
         poolInfo.push(PoolInfo({
             ContractAddress: _lpTokenAddress,
@@ -225,9 +221,7 @@ contract LiquidityMining is Ownable, AccessControl {
             compYield0: _cy0,
             compYield1: _cy1,
             compYield2: _cy2,
-            lockPeriod0: _lockP0,
-            lockPeriod1: _lockP1,
-            lockPeriod2: _lockP2
+            maxPoolBP: _mbp
         }));
   
     }
@@ -305,16 +299,15 @@ contract LiquidityMining is Ownable, AccessControl {
      * @dev function to show current lock periods.
      */
     
-    function showCurrentLockPeriods(uint _pid) external view returns (
+    function showCurrentLockPeriods() external view returns (
         uint _lockPeriod0, 
         uint _lockPeriod1, 
         uint _lockPeriod2
     ) {
-        PoolInfo memory pool = poolInfo[_pid];
         return (
-            pool.lockPeriod0, 
-            pool.lockPeriod1, 
-            pool.lockPeriod2
+            lockPeriod0, 
+            lockPeriod1, 
+            lockPeriod2
         );
     }
     
@@ -334,13 +327,12 @@ contract LiquidityMining is Ownable, AccessControl {
      * @dev allows accounts with the _ADMIN role to set new lock periods.
      */
     
-    function setLockPeriods(uint _newPeriod0, uint _newPeriod1, uint _newPeriod2, uint _pid) public {
+    function setLockPeriods(uint _newPeriod0, uint _newPeriod1, uint _newPeriod2) public {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
         require(_newPeriod2 > _newPeriod1 && _newPeriod1 > _newPeriod0);
-        PoolInfo storage pool = poolInfo[_pid];
-        pool.lockPeriod0 = _newPeriod0;
-        pool.lockPeriod1 = _newPeriod1;
-        pool.lockPeriod2 = _newPeriod2;
+        lockPeriod0 = _newPeriod0;
+        lockPeriod1 = _newPeriod1;
+        lockPeriod2 = _newPeriod2;
     }
     
     /**
@@ -362,11 +354,13 @@ contract LiquidityMining is Ownable, AccessControl {
     function setLockPeriodBasisPoints (
         uint _newLockPeriod0BasisPoint, 
         uint _newLockPeriod1BasisPoint, 
-        uint _newLockPeriod2BasisPoint) public {
+        uint _newLockPeriod2BasisPoint,
+        uint _pid) public {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
-        lockPeriod0BasisPoint = _newLockPeriod0BasisPoint;
-        lockPeriod1BasisPoint = _newLockPeriod1BasisPoint;
-        lockPeriod2BasisPoint = _newLockPeriod2BasisPoint;
+        PoolInfo storage pool = poolInfo[_pid];
+        pool.lockPeriod0BasisPoint = _newLockPeriod0BasisPoint;
+        pool.lockPeriod1BasisPoint = _newLockPeriod1BasisPoint;
+        pool.lockPeriod2BasisPoint = _newLockPeriod2BasisPoint;
     }
     
     function setLockPeriodBPScale(uint _newLockPeriodScale) public {
@@ -384,11 +378,13 @@ contract LiquidityMining is Ownable, AccessControl {
     function setCompoundYield (
         uint _newCompoundYield0, 
         uint _newCompoundYield1, 
-        uint _newCompoundYield2) public {
+        uint _newCompoundYield2,
+        uint _pid) public {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
-        compYield0 = _newCompoundYield0;
-        compYield1 = _newCompoundYield1;
-        compYield2 = _newCompoundYield2;
+        PoolInfo storage pool = poolInfo[_pid];
+        pool.compYield0 = _newCompoundYield0;
+        pool.compYield1 = _newCompoundYield1;
+        pool.compYield2 = _newCompoundYield2;
         
     }
     
