@@ -201,7 +201,18 @@ contract LiquidityMining is Ownable, AccessControl {
      * zero value if called.
      */
     
-    function addLiquidtyPoolToken(IERC20 _lpTokenAddress, uint _bonus, uint _lpbp0, uint _lpbp1, uint _lpbp2, uint _cy0, uint _cy1, uint _cy2, uint _lockP0, uint _lockP1, uint _lockP2) public {
+    function addLiquidtyPoolToken(
+        IERC20 _lpTokenAddress, 
+        uint _bonus, 
+        uint _lpbp0, 
+        uint _lpbp1, 
+        uint _lpbp2, 
+        uint _cy0, 
+        uint _cy1, 
+        uint _cy2, 
+        uint _lockP0, 
+        uint _lockP1, 
+        uint _lockP2) public {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
         poolInfo.push(PoolInfo({
             ContractAddress: _lpTokenAddress,
