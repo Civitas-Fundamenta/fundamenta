@@ -4,14 +4,14 @@
 // https://github.com/Civitas-Fundamenta
 // mhooft@fundamenta.network)
 
-pragma solidity ^0.7.3;
+pragma solidity ^0.8.0;
 
 import "./TokenInterface.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/AccessControl.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/SafeERC20.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol";
 
 contract LiquidityMining is Ownable, AccessControl {
     
@@ -94,6 +94,12 @@ contract LiquidityMining is Ownable, AccessControl {
         uint TotalRewardsPaidByPool;
         uint TotalLPTokensLocked;
         uint PoolBonus;
+        //uint lockPeriod0BasisPoint;
+        //uint lockPeriod1BasisPoint;
+        //uint lockPeriod2BasisPoint;
+        //uint compYield0;
+        //uint compYield1;
+        //uint compYield2;
     }
     
     /**
