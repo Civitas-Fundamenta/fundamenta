@@ -44,7 +44,6 @@ contract LiquidityMining is Ownable, AccessControl {
     uint private lockPeriod2;
     
     uint private lockPeriodBPScale;
-    uint public maxUserBP;
     
     uint private preYieldDivisor;
     
@@ -131,7 +130,6 @@ contract LiquidityMining is Ownable, AccessControl {
         periodCalc = 6500;
         lockPeriodBPScale = 10000;
         preYieldDivisor = 2;
-        maxUserBP = 3500;
         lockPeriod0 = 5;
         lockPeriod1 = 10;
         lockPeriod2 = 15;
@@ -355,10 +353,10 @@ contract LiquidityMining is Ownable, AccessControl {
     
     }
 
-    function setMaxUserBP(uint _newMaxUserBP) public {
+    function setMaxUserBP(uint _newMaxPoolBP, uint _pid) public {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
-        maxUserBP = _newMaxUserBP;
- 
+        PoolInfo storage pool = poolInfo[_pid];
+        pool.maxPoolBP = _newMaxPoolBP;
     }
     
     function setCompoundYield (
@@ -553,7 +551,7 @@ contract LiquidityMining is Ownable, AccessControl {
                     block.number.add(periodCalc.mul(lockPeriod0)), 
                     _lpTokenAmount.add(p.LockedAmount), 
                     lockPeriod0, 
-                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : pool.compYield0),
+                    p.UserBP.add(p.UserBP >= pool.maxPoolBP ? 0 : pool.compYield0),
                     p.TotalRewardsPaid.add(yield)
                 );
                 pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
@@ -566,7 +564,7 @@ contract LiquidityMining is Ownable, AccessControl {
                     block.number.add(periodCalc.mul(lockPeriod1)),
                     _lpTokenAmount.add(p.LockedAmount), 
                     lockPeriod1, 
-                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : pool.compYield1),
+                    p.UserBP.add(p.UserBP >= pool.maxPoolBP ? 0 : pool.compYield1),
                     p.TotalRewardsPaid.add(yield)
                 );
                 pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
@@ -579,7 +577,7 @@ contract LiquidityMining is Ownable, AccessControl {
                     block.number.add(periodCalc.mul(lockPeriod2)), 
                     _lpTokenAmount.add(p.LockedAmount), 
                     lockPeriod2, 
-                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : pool.compYield2),
+                    p.UserBP.add(p.UserBP >= pool.maxPoolBP ? 0 : pool.compYield2),
                     p.TotalRewardsPaid.add(yield)
                 );
                 pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
@@ -593,7 +591,7 @@ contract LiquidityMining is Ownable, AccessControl {
                     block.number.add(periodCalc.mul(lockPeriod0)), 
                     p.LockedAmount, 
                     lockPeriod0, 
-                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : pool.compYield0),
+                    p.UserBP.add(p.UserBP >= pool.maxPoolBP ? 0 : pool.compYield0),
                     p.TotalRewardsPaid.add(yield)
                 );
                 pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
@@ -604,7 +602,7 @@ contract LiquidityMining is Ownable, AccessControl {
                     block.number.add(periodCalc.mul(lockPeriod1)), 
                     p.LockedAmount, 
                     lockPeriod1, 
-                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : pool.compYield1),
+                    p.UserBP.add(p.UserBP >= pool.maxPoolBP ? 0 : pool.compYield1),
                     p.TotalRewardsPaid.add(yield)
                 );
                 pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
@@ -615,7 +613,7 @@ contract LiquidityMining is Ownable, AccessControl {
                     block.number.add(periodCalc.mul(lockPeriod2)), 
                     p.LockedAmount, 
                     lockPeriod2, 
-                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : pool.compYield2),
+                    p.UserBP.add(p.UserBP >= pool.maxPoolBP ? 0 : pool.compYield2),
                     p.TotalRewardsPaid.add(yield)
                 );
                 pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
