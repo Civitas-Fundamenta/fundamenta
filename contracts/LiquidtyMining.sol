@@ -43,10 +43,6 @@ contract LiquidityMining is Ownable, AccessControl {
     uint private lockPeriod1;
     uint private lockPeriod2;
     
-    uint private compYield0;
-    uint private compYield1;
-    uint private compYield2;
-    
     uint private lockPeriodBPScale;
     uint public maxUserBP;
     
@@ -557,7 +553,7 @@ contract LiquidityMining is Ownable, AccessControl {
                     block.number.add(periodCalc.mul(lockPeriod0)), 
                     _lpTokenAmount.add(p.LockedAmount), 
                     lockPeriod0, 
-                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : compYield0),
+                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : pool.compYield0),
                     p.TotalRewardsPaid.add(yield)
                 );
                 pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
@@ -570,7 +566,7 @@ contract LiquidityMining is Ownable, AccessControl {
                     block.number.add(periodCalc.mul(lockPeriod1)),
                     _lpTokenAmount.add(p.LockedAmount), 
                     lockPeriod1, 
-                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : compYield1),
+                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : pool.compYield1),
                     p.TotalRewardsPaid.add(yield)
                 );
                 pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
@@ -583,7 +579,7 @@ contract LiquidityMining is Ownable, AccessControl {
                     block.number.add(periodCalc.mul(lockPeriod2)), 
                     _lpTokenAmount.add(p.LockedAmount), 
                     lockPeriod2, 
-                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : compYield2),
+                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : pool.compYield2),
                     p.TotalRewardsPaid.add(yield)
                 );
                 pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
@@ -597,7 +593,7 @@ contract LiquidityMining is Ownable, AccessControl {
                     block.number.add(periodCalc.mul(lockPeriod0)), 
                     p.LockedAmount, 
                     lockPeriod0, 
-                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : compYield0),
+                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : pool.compYield0),
                     p.TotalRewardsPaid.add(yield)
                 );
                 pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
@@ -608,7 +604,7 @@ contract LiquidityMining is Ownable, AccessControl {
                     block.number.add(periodCalc.mul(lockPeriod1)), 
                     p.LockedAmount, 
                     lockPeriod1, 
-                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : compYield1),
+                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : pool.compYield1),
                     p.TotalRewardsPaid.add(yield)
                 );
                 pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
@@ -619,7 +615,7 @@ contract LiquidityMining is Ownable, AccessControl {
                     block.number.add(periodCalc.mul(lockPeriod2)), 
                     p.LockedAmount, 
                     lockPeriod2, 
-                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : compYield2),
+                    p.UserBP.add(p.UserBP >= maxUserBP ? 0 : pool.compYield2),
                     p.TotalRewardsPaid.add(yield)
                 );
                 pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
