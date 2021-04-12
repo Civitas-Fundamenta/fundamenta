@@ -14,11 +14,11 @@
 // of token movement.  This is a comprimise to allow recovery of tokens/ether 
 // that are sent to the contract by mistake.
 
-pragma solidity ^0.7.3;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/utils/SafeERC20.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/AccessControl.sol";
 
 contract Vesting is AccessControl {
     
@@ -46,6 +46,8 @@ contract Vesting is AccessControl {
         address beneficiary;
         uint ReleaseTime;
         uint LockedAmount;
+        uint releasedPerMonth;
+        uint totalAmountReleased;
     }
     
     mapping (address => Beneficiaries) beneficiary;
@@ -75,11 +77,11 @@ contract Vesting is AccessControl {
      * @dev adds beneficiary
      */
     
-    function addbeneficary(address _beneficiary, uint _ReleaseTime, uint _LockedAmount) public {
+    function addbeneficary(address _beneficiary, uint _ReleaseTime, uint _LockedAmount, uint _releasedPerMonth) public {
          Beneficiaries storage b = beneficiary[_beneficiary];
          require(hasRole(_ADMIN, msg.sender));
          require(b.LockedAmount == 0);
-         beneficiary[_beneficiary] = Beneficiaries(_beneficiary, _ReleaseTime, _LockedAmount);
+         beneficiary[_beneficiary] = Beneficiaries(_beneficiary, _ReleaseTime, _LockedAmount, _releasedPerMonth, 0);
          emit beneficiaryAdded (_beneficiary, _ReleaseTime, _LockedAmount, block.number);
     }
     
@@ -107,20 +109,23 @@ contract Vesting is AccessControl {
     
     /**
      * @dev allows Beneficiaries to wthdraw vested tokens
-     * if the release time is satisfied.
+     * if the release time is satisfied.  2,592,000
      */
     
     function withdrawVesting() external {
         Beneficiaries storage b = beneficiary[msg.sender];
-        if (b.LockedAmount == 0)
+        if (b.LockedAmount == 0) {
         revert ("You are not a beneficiary or do not have any tokens vesting");
-        else if(b.ReleaseTime > block.timestamp) 
+        } else if(b.ReleaseTime > block.timestamp) { 
         revert("It isn't time yet speedracer...");
-        else if (b.ReleaseTime < block.timestamp)
-        require(contractBalance() >= b.LockedAmount, "Not enough tokens in contract balance to cover withdrawl");
+        } else if (b.ReleaseTime < block.timestamp && b.releasedPerMonth <= b.LockedAmount) {
+        token.safeTransfer(b.beneficiary, b.releasedPerMonth);
+        emit beneficiaryWithdraw (b.beneficiary, b.releasedPerMonth, block.number);
+        }else if (b.ReleaseTime < block.timestamp && b.LockedAmount < b.releasedPerMonth) {
         token.safeTransfer(b.beneficiary, b.LockedAmount);
         emit beneficiaryWithdraw (b.beneficiary, b.LockedAmount, block.number);
-        beneficiary[msg.sender] = Beneficiaries(address(0), 0, 0);
+        }
+        beneficiary[msg.sender] = Beneficiaries(b.beneficiary, block.timestamp.add(2592000), b.LockedAmount.sub(b.releasedPerMonth), b.releasedPerMonth, b.totalAmountReleased.add(b.releasedPerMonth));
     }
     
     /**
