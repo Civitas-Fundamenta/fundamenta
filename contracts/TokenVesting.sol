@@ -33,7 +33,9 @@ contract Vesting is AccessControl {
     
     //---------Interface-----------
     
-    IERC20  private token;
+    IERC20 private token;
+    
+    uint public periodLength;
     
     //------structs/mappings-------
     
@@ -46,7 +48,7 @@ contract Vesting is AccessControl {
         address beneficiary;
         uint releaseTime;
         uint lockedAmount;
-        uint releasedPerMonth;
+        uint releasedPerPeriod;
         uint totalAmountReleased;
     }
     
@@ -63,6 +65,7 @@ contract Vesting is AccessControl {
 
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        periodLength = 2592000; // Set initial period length
     }
     
     //------contract functions-------
@@ -72,15 +75,20 @@ contract Vesting is AccessControl {
         token = _token;
     }
     
+    function setPeriodLength(uint _periodLength) public {
+        require(hasRole(_ADMIN, msg.sender));
+        periodLength = _periodLength;
+    }
+    
     /**
      * @dev adds beneficiary
      */
     
-    function addbeneficary(address _beneficiary, uint _ReleaseTime, uint _LockedAmount, uint _releasedPerMonth) public {
+    function addbeneficary(address _beneficiary, uint _ReleaseTime, uint _LockedAmount, uint _releasedPerPeriod) public {
          Beneficiaries storage b = beneficiary[_beneficiary];
          require(hasRole(_ADMIN, msg.sender));
          require(b.lockedAmount == 0);
-         beneficiary[_beneficiary] = Beneficiaries(_beneficiary, _ReleaseTime, _LockedAmount, _releasedPerMonth, 0);
+         beneficiary[_beneficiary] = Beneficiaries(_beneficiary, _ReleaseTime, _LockedAmount, _releasedPerPeriod, 0);
          emit beneficiaryAdded (_beneficiary, _ReleaseTime, _LockedAmount, block.number);
     }
     
@@ -117,14 +125,14 @@ contract Vesting is AccessControl {
         revert ("You are not a beneficiary or do not have any tokens vesting");
         } else if(b.releaseTime > block.timestamp) { 
         revert("It isn't time yet speedracer...");
-        } else if (b.releaseTime < block.timestamp && b.releasedPerMonth <= b.lockedAmount) {
-        token.safeTransfer(b.beneficiary, b.releasedPerMonth);
-        emit beneficiaryWithdraw (b.beneficiary, b.releasedPerMonth, block.number, block.timestamp.add(2592000));
-        }else if (b.releaseTime < block.timestamp && b.lockedAmount < b.releasedPerMonth) {
+        } else if (b.releaseTime < block.timestamp && b.releasedPerPeriod <= b.lockedAmount) {
+        token.safeTransfer(b.beneficiary, b.releasedPerPeriod);
+        emit beneficiaryWithdraw (b.beneficiary, b.releasedPerPeriod, block.number, block.timestamp.add(periodLength));
+        }else if (b.releaseTime < block.timestamp && b.lockedAmount < b.releasedPerPeriod) {
         token.safeTransfer(b.beneficiary, b.lockedAmount);
-        emit beneficiaryWithdraw (b.beneficiary, b.lockedAmount, block.number, block.timestamp.add(2592000));
+        emit beneficiaryWithdraw (b.beneficiary, b.lockedAmount, block.number, block.timestamp.add(periodLength));
         }
-        beneficiary[msg.sender] = Beneficiaries(b.beneficiary, block.timestamp.add(2592000), b.lockedAmount.sub(b.releasedPerMonth), b.releasedPerMonth, b.totalAmountReleased.add(b.releasedPerMonth));
+        beneficiary[msg.sender] = Beneficiaries(b.beneficiary, block.timestamp.add(periodLength), b.lockedAmount.sub(b.releasedPerPeriod), b.releasedPerPeriod, b.totalAmountReleased.add(b.releasedPerPeriod));
     }
     
     /**
