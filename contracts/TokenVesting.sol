@@ -65,7 +65,7 @@ contract Vesting is AccessControl {
 
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        periodLength = 2592000; // Set initial period length
+        periodLength = 2592000; // Set initial period length (30 Days in seconds)
     }
     
     //------contract functions-------
@@ -78,6 +78,10 @@ contract Vesting is AccessControl {
     function setPeriodLength(uint _periodLength) public {
         require(hasRole(_ADMIN, msg.sender));
         periodLength = _periodLength;
+    }
+    
+    function getTimestamp() public view returns (uint _timestamp) {
+        return block.timestamp;
     }
     
     /**
@@ -116,7 +120,7 @@ contract Vesting is AccessControl {
     
     /**
      * @dev allows Beneficiaries to wthdraw vested tokens
-     * if the release time is satisfied.  2,592,000
+     * if the release time is satisfied.
      */
     
     function withdrawVesting() external {
@@ -128,11 +132,12 @@ contract Vesting is AccessControl {
         } else if (b.releaseTime < block.timestamp && b.releasedPerPeriod <= b.lockedAmount) {
         token.safeTransfer(b.beneficiary, b.releasedPerPeriod);
         emit beneficiaryWithdraw (b.beneficiary, b.releasedPerPeriod, block.number, block.timestamp.add(periodLength));
+        beneficiary[msg.sender] = Beneficiaries(b.beneficiary, block.timestamp.add(periodLength), b.lockedAmount.sub(b.releasedPerPeriod), b.releasedPerPeriod, b.totalAmountReleased.add(b.releasedPerPeriod));
         }else if (b.releaseTime < block.timestamp && b.lockedAmount < b.releasedPerPeriod) {
         token.safeTransfer(b.beneficiary, b.lockedAmount);
         emit beneficiaryWithdraw (b.beneficiary, b.lockedAmount, block.number, block.timestamp.add(periodLength));
+        beneficiary[msg.sender] = Beneficiaries(b.beneficiary, block.timestamp.add(periodLength), 0, b.releasedPerPeriod, b.totalAmountReleased.add(b.releasedPerPeriod));
         }
-        beneficiary[msg.sender] = Beneficiaries(b.beneficiary, block.timestamp.add(periodLength), b.lockedAmount.sub(b.releasedPerPeriod), b.releasedPerPeriod, b.totalAmountReleased.add(b.releasedPerPeriod));
     }
     
     /**
