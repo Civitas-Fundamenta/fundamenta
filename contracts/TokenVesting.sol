@@ -40,7 +40,7 @@ contract Vesting is AccessControl {
     //------structs/mappings-------
     
     /**
-     * @dev struct to keep track of beneficiaries
+     * struct to keep track of beneficiaries
      * release times and balances.
      */
     
@@ -56,8 +56,8 @@ contract Vesting is AccessControl {
     
     //-----------Events--------------
     
-    event beneficiaryAdded (address _beneficiary, uint _ReleaseTime, uint _LockedAmount, uint _blockHeight);
-    event beneficiaryWithdraw (address _beneficiary, uint _WithdrawnAmount, uint _blockHeight, uint _nextUnlock);
+    event beneficiaryAdded (address _beneficiary, uint _releaseTime, uint _LockedAmount, uint _blockHeight);
+    event beneficiaryWithdraw (address _beneficiary, uint _withdrawnAmount, uint _blockHeight, uint _nextUnlock);
     event beneficiaryChanged (address _currentBeneficiary, address _newBeneficiary, uint _blockHeight);
     event tokensRescued (address _pebcak, address _tokenContract, uint _amountRescued, uint _blockHeight);
 
@@ -80,12 +80,8 @@ contract Vesting is AccessControl {
         periodLength = _periodLength;
     }
     
-    function getTimestamp() public view returns (uint _timestamp) {
-        return block.timestamp;
-    }
-    
     /**
-     * @dev adds beneficiary
+     * adds beneficiary
      */
     
     function addbeneficary(address _beneficiary, uint _ReleaseTime, uint _LockedAmount, uint _releasedPerPeriod) public {
@@ -97,12 +93,12 @@ contract Vesting is AccessControl {
     }
     
     /**
-     * @dev returns if msg.sender is a beneficiary and if so 
+     * returns if msg.sender is a beneficiary and if so 
      * returns beneficiary information
      */
     
     /**
-     * @dev check if a user is a beneficiary and if so 
+     * check if a user is a beneficiary and if so 
      * return beneficiary information
      */
     
@@ -119,7 +115,7 @@ contract Vesting is AccessControl {
     }
     
     /**
-     * @dev allows Beneficiaries to wthdraw vested tokens
+     * allows Beneficiaries to wthdraw vested tokens
      * if the release time is satisfied.
      */
     
@@ -141,7 +137,7 @@ contract Vesting is AccessControl {
     }
     
     /**
-     * @dev emergency function to change beneficiary addresses if 
+     * emergency function to change beneficiary addresses if 
      * they pull a bozo and lose or compromise keys before the release
      * time has been reached.
      */
@@ -154,7 +150,7 @@ contract Vesting is AccessControl {
     }
     
     /**
-     * @dev returns contract balance
+     * returns contract balance
      */
     
     function contractBalance() public view returns (uint _balance) {
@@ -164,7 +160,7 @@ contract Vesting is AccessControl {
     //-----------Rescue--------------
     
     /**
-     * @dev emergency functions to transfer Ether and ERC20 tokens that 
+     * emergency functions to transfer Ether and ERC20 tokens that 
      * are mistakenly sent to the contract.
      */
 
