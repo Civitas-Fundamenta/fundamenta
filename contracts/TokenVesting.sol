@@ -44,8 +44,8 @@ contract Vesting is AccessControl {
     
     struct Beneficiaries {
         address beneficiary;
-        uint ReleaseTime;
-        uint LockedAmount;
+        uint releaseTime;
+        uint lockedAmount;
         uint releasedPerMonth;
         uint totalAmountReleased;
     }
@@ -55,8 +55,7 @@ contract Vesting is AccessControl {
     //-----------Events--------------
     
     event beneficiaryAdded (address _beneficiary, uint _ReleaseTime, uint _LockedAmount, uint _blockHeight);
-    event beneficiaryWithdraw (address _beneficiary, uint _WithdrawnAmount, uint _blockHeight);
-    event releaseTimeIncreased (address _beneficiary, uint _newReleaseTime, uint _blockHeight);
+    event beneficiaryWithdraw (address _beneficiary, uint _WithdrawnAmount, uint _blockHeight, uint _nextUnlock);
     event beneficiaryChanged (address _currentBeneficiary, address _newBeneficiary, uint _blockHeight);
     event tokensRescued (address _pebcak, address _tokenContract, uint _amountRescued, uint _blockHeight);
 
@@ -80,7 +79,7 @@ contract Vesting is AccessControl {
     function addbeneficary(address _beneficiary, uint _ReleaseTime, uint _LockedAmount, uint _releasedPerMonth) public {
          Beneficiaries storage b = beneficiary[_beneficiary];
          require(hasRole(_ADMIN, msg.sender));
-         require(b.LockedAmount == 0);
+         require(b.lockedAmount == 0);
          beneficiary[_beneficiary] = Beneficiaries(_beneficiary, _ReleaseTime, _LockedAmount, _releasedPerMonth, 0);
          emit beneficiaryAdded (_beneficiary, _ReleaseTime, _LockedAmount, block.number);
     }
@@ -97,12 +96,12 @@ contract Vesting is AccessControl {
     
     function isBeneficiary(address _beneficiaryAddress) external view returns (address _beneficiary, uint _ReleaseTime, uint _LockedAmount, uint _timeRemainingInSeconds)  {
         Beneficiaries memory b = beneficiary[_beneficiaryAddress];
-         if(b.ReleaseTime > block.timestamp) {
-            uint timeRemaining = b.ReleaseTime.sub(block.timestamp);
-            return (b.beneficiary, b.ReleaseTime, b.LockedAmount, timeRemaining);
-        } else if(b.ReleaseTime < block.timestamp) {
+         if(b.releaseTime > block.timestamp) {
+            uint timeRemaining = b.releaseTime.sub(block.timestamp);
+            return (b.beneficiary, b.releaseTime, b.lockedAmount, timeRemaining);
+        } else if(b.releaseTime < block.timestamp) {
             uint timeRemaining = 0;
-            return (b.beneficiary, b.ReleaseTime, b.LockedAmount, timeRemaining);
+            return (b.beneficiary, b.releaseTime, b.lockedAmount, timeRemaining);
     
         }    
     }
@@ -114,32 +113,18 @@ contract Vesting is AccessControl {
     
     function withdrawVesting() external {
         Beneficiaries storage b = beneficiary[msg.sender];
-        if (b.LockedAmount == 0) {
+        if (b.lockedAmount == 0) {
         revert ("You are not a beneficiary or do not have any tokens vesting");
-        } else if(b.ReleaseTime > block.timestamp) { 
+        } else if(b.releaseTime > block.timestamp) { 
         revert("It isn't time yet speedracer...");
-        } else if (b.ReleaseTime < block.timestamp && b.releasedPerMonth <= b.LockedAmount) {
+        } else if (b.releaseTime < block.timestamp && b.releasedPerMonth <= b.lockedAmount) {
         token.safeTransfer(b.beneficiary, b.releasedPerMonth);
-        emit beneficiaryWithdraw (b.beneficiary, b.releasedPerMonth, block.number);
-        }else if (b.ReleaseTime < block.timestamp && b.LockedAmount < b.releasedPerMonth) {
-        token.safeTransfer(b.beneficiary, b.LockedAmount);
-        emit beneficiaryWithdraw (b.beneficiary, b.LockedAmount, block.number);
+        emit beneficiaryWithdraw (b.beneficiary, b.releasedPerMonth, block.number, block.timestamp.add(2592000));
+        }else if (b.releaseTime < block.timestamp && b.lockedAmount < b.releasedPerMonth) {
+        token.safeTransfer(b.beneficiary, b.lockedAmount);
+        emit beneficiaryWithdraw (b.beneficiary, b.lockedAmount, block.number, block.timestamp.add(2592000));
         }
-        beneficiary[msg.sender] = Beneficiaries(b.beneficiary, block.timestamp.add(2592000), b.LockedAmount.sub(b.releasedPerMonth), b.releasedPerMonth, b.totalAmountReleased.add(b.releasedPerMonth));
-    }
-    
-    /**
-     * @dev flexibility is nice so we will allow the ability
-     * for beneficiaries to increase vesting time. You cannot
-     * decrease however.
-     */
-    
-    function increaseReleaseTime(uint _newReleaseTime, address _beneficiary) public {
-        require(hasRole(_ADMIN, msg.sender));
-        Beneficiaries storage b = beneficiary[_beneficiary];
-        require(_newReleaseTime > block.timestamp && _newReleaseTime > b.ReleaseTime, "Release time can only be increased");
-        b.ReleaseTime = _newReleaseTime;
-        emit releaseTimeIncreased (_beneficiary, _newReleaseTime, block.number);
+        beneficiary[msg.sender] = Beneficiaries(b.beneficiary, block.timestamp.add(2592000), b.lockedAmount.sub(b.releasedPerMonth), b.releasedPerMonth, b.totalAmountReleased.add(b.releasedPerMonth));
     }
     
     /**
