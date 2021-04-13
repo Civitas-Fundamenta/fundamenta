@@ -165,7 +165,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev allows user to withrdraw any pending rewards as
+     * allows user to withrdraw any pending rewards as
      * 
      * long as the `rewardsWindow` is satisfied.
      */

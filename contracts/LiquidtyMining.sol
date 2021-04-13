@@ -625,19 +625,6 @@ contract LiquidityMining is Ownable, AccessControl {
     
     //-------Movement Functions---------------------
 
-    /**
-     * The below function will allow contracts or accounts
-     * with the _MOVE role to move tokens that are staked with
-     * the contract.  Currently this will not be used nor will
-     * any accounts/contracts be granted the _MOVE role.  The 
-     * Reason for including this capability is two fold. One, 
-     * it allows us to recover tokens if they are sent to the 
-     * contract by mistake. Two, it will allow us to further
-     * extend the use of this contract and the tokens staked
-     * within it to allow for use of farming other opprotiunites
-     * giving users even further rewards.  If and when this is 
-     * activated/used will be a community decision.  
-     */
     
     function moveERC20(address _ERC20, address _dest, uint _ERC20Amount) public {
         require(hasRole(_MOVE, msg.sender));
