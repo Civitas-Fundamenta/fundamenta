@@ -10,7 +10,7 @@ import "./TokenInterface.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/AccessControl.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/SafeERC20.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/utils/SafeERC20.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol";
 
 contract LiquidityMining is Ownable, AccessControl {
@@ -34,7 +34,7 @@ contract LiquidityMining is Ownable, AccessControl {
     bool public removePositionOnly;
     
     /**
-     * @dev variables to define three seperate lockPeriod's.
+     * variables to define three seperate lockPeriod's.
      * Each period uses different multipliers and basis points 
      * to calculate Liquidity Miners daily yield.
      */
@@ -48,7 +48,7 @@ contract LiquidityMining is Ownable, AccessControl {
     uint private preYieldDivisor;
     
     /**
-     * @dev `periodCalc` uses blocks instead of timestamps
+     * `periodCalc` uses blocks instead of timestamps
      * as a way to determine days. approx. 6500 blocks a day
      *  are mined on the ethereum network. 
      * `periodCalc` can also be configured if this were ever 
@@ -61,7 +61,7 @@ contract LiquidityMining is Ownable, AccessControl {
     //-------Structs/Mappings/Arrays-------------
     
     /**
-     * @dev struct to keep track of Liquidity Providers who have 
+     * struct to keep track of Liquidity Providers who have 
      * chosen to stake UniswapV2 Liquidity Pool tokens towards 
      * earning FMTA. 
      */ 
@@ -76,7 +76,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
     
     /**
-     * @dev struct to keep track of liquidty pools, total
+     * struct to keep track of liquidty pools, total
      * rewards paid and total value locked in said pools.
      */
     
@@ -95,7 +95,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
     
     /**
-     * @dev PoolInfo is tracked as an array. The length/index 
+     * PoolInfo is tracked as an array. The length/index 
      * of the array will be used as the variable `_pid` (Pool ID) 
      * throughout the contract.
      */
@@ -103,7 +103,7 @@ contract LiquidityMining is Ownable, AccessControl {
     PoolInfo[] public poolInfo;
     
     /**
-     * @dev mapping to keep track of the struct LiquidityProviders 
+     * mapping to keep track of the struct LiquidityProviders 
      * mapeed to user addresses but also maps it to `uint _pid`
      * this makes tracking the same address across multiple pools 
      * with different positions possible as _pid will also be the 
@@ -123,7 +123,7 @@ contract LiquidityMining is Ownable, AccessControl {
     
     
     /**
-     * @dev constructor sets initial values for contract intiialization
+     * constructor sets initial values for contract intiialization
      */ 
     
     constructor() {
@@ -174,7 +174,7 @@ contract LiquidityMining is Ownable, AccessControl {
     //------------Token Functions----------------------
     
     /**
-     * @dev functions to add and remove Liquidty Pool pairs to allow users to
+     * functions to add and remove Liquidty Pool pairs to allow users to
      * stake the pools LP Tokens towards earnign rewards. Can only
      * be called by accounts with the `_ADMIN` role and should only 
      * be added once. The index at which the pool pair is stored 
@@ -220,7 +220,7 @@ contract LiquidityMining is Ownable, AccessControl {
     //------------Information Functions------------------
     
     /**
-     * @dev return the length of the pool array
+     * return the length of the pool array
      */
     
      function poolLength() external view returns (uint) {
@@ -228,7 +228,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
     
     /**
-     * @dev function to return the contracts balances of LP Tokens
+     * function to return the contracts balances of LP Tokens
      * staked from different Uniswap pools.
      */
 
@@ -239,7 +239,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
     
     /**
-     * @dev funtion that returns a callers staked position in a pool 
+     * funtion that returns a callers staked position in a pool 
      * using `_pid` as an argument.
      */
     
@@ -266,7 +266,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
     
     /**
-     * @dev funtion that returns a true or false regarding whether
+     * funtion that returns a true or false regarding whether
      * an account as a position in a pool.  Takes the account address
      * and `_pid` as arguments
      */
@@ -280,7 +280,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
     
     /**
-     * @dev function to show current lock periods.
+     * function to show current lock periods.
      */
     
     function showCurrentLockPeriods() external view returns (
@@ -298,7 +298,7 @@ contract LiquidityMining is Ownable, AccessControl {
     //-----------Set Functions----------------------
     
     /**
-     * @dev function to set the token that will be minting rewards 
+     * function to set the token that will be minting rewards 
      * for Liquidity Providers.
      */
     
@@ -308,7 +308,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
     
     /**
-     * @dev allows accounts with the _ADMIN role to set new lock periods.
+     * allows accounts with the _ADMIN role to set new lock periods.
      */
     
     function setLockPeriods(uint _newPeriod0, uint _newPeriod1, uint _newPeriod2) public {
@@ -320,7 +320,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
     
     /**
-     * @dev allows contract owner to set a new `periodCalc`
+     * allows contract owner to set a new `periodCalc`
      */
     
     function setPeriodCalc(uint _newPeriodCalc) public {
@@ -329,7 +329,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
 
     /**
-     * @dev set of functions to set parameters regarding 
+     * set of functions to set parameters regarding 
      * lock periods and basis points which are used to  
      * calculate a users daily yield. Can only be called 
      * by contract _ADMIN.
@@ -341,10 +341,9 @@ contract LiquidityMining is Ownable, AccessControl {
         uint _newLockPeriod2BasisPoint,
         uint _pid) public {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
-        PoolInfo storage pool = poolInfo[_pid];
-        pool.lockPeriod0BasisPoint = _newLockPeriod0BasisPoint;
-        pool.lockPeriod1BasisPoint = _newLockPeriod1BasisPoint;
-        pool.lockPeriod2BasisPoint = _newLockPeriod2BasisPoint;
+        poolInfo[_pid].lockPeriod0BasisPoint = _newLockPeriod0BasisPoint;
+        poolInfo[_pid].lockPeriod1BasisPoint = _newLockPeriod1BasisPoint;
+        poolInfo[_pid].lockPeriod2BasisPoint = _newLockPeriod2BasisPoint;
     }
     
     function setLockPeriodBPScale(uint _newLockPeriodScale) public {
@@ -365,17 +364,15 @@ contract LiquidityMining is Ownable, AccessControl {
         uint _newCompoundYield2,
         uint _pid) public {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
-        PoolInfo storage pool = poolInfo[_pid];
-        pool.compYield0 = _newCompoundYield0;
-        pool.compYield1 = _newCompoundYield1;
-        pool.compYield2 = _newCompoundYield2;
+        poolInfo[_pid].compYield0 = _newCompoundYield0;
+        poolInfo[_pid].compYield1 = _newCompoundYield1;
+        poolInfo[_pid].compYield2 = _newCompoundYield2;
         
     }
     
     function setPoolBonus(uint _pid, uint _bonus) public {
         require(hasRole(_ADMIN, msg.sender));
-        PoolInfo storage pool = poolInfo[_pid];
-        pool.PoolBonus = _bonus;
+        poolInfo[_pid].PoolBonus = _bonus;
     }
 
     function setPreYieldDivisor(uint _newDivisor) public {
@@ -386,7 +383,7 @@ contract LiquidityMining is Ownable, AccessControl {
     //-----------Position/Rewards Functions------------------
     
     /**
-     * @dev this function allows a user to add a liquidity Staking
+     * this function allows a user to add a liquidity Staking
      * position.  The user will need to choose one of the three
      * configured lock Periods. Users may add to the position 
      * only once per lock period.
@@ -448,7 +445,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
     
     /**
-     * @dev allows a user to remove a liquidity staking position
+     * allows a user to remove a liquidity staking position
      * and will withdraw any pending rewards. User must withdraw 
      * the entire position.
      */
@@ -479,7 +476,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
 
     /**
-     * @dev function to forcibly remove a users position.  This 
+     * function to forcibly remove a users position.  This 
      * is required due to the fact that the basis points used to 
      * calculate user DPY will be constantly changing.
      * We will need to forceibly remove positions of lazy (or malicious)
@@ -515,7 +512,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
 
     /**
-     * @dev calculates a users daily yield. DY is calculated
+     * calculates a users daily yield. DY is calculated
      * using basis points and the lock period as a multiplier.
      * Basis Points and the scale used are configurble by accounts
      * or contracts that have the _ADMIN Role
@@ -529,7 +526,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
     
     /**
-     * @dev allow user to withdraw thier accrued yield. Reset 
+     * allow user to withdraw thier accrued yield. Reset 
      * the lock period to continue liquidity mining and apply
      * CDPY to DPY. Allow user to add more stake if desired
      * in the process. Once a user has reached the `maxUserBP`
@@ -629,7 +626,7 @@ contract LiquidityMining is Ownable, AccessControl {
     //-------Movement Functions---------------------
 
     /**
-     * @dev The below function will allow contracts or accounts
+     * The below function will allow contracts or accounts
      * with the _MOVE role to move tokens that are staked with
      * the contract.  Currently this will not be used nor will
      * any accounts/contracts be granted the _MOVE role.  The 
