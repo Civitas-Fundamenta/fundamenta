@@ -8,13 +8,13 @@
 // Employs the use of Role Based Access Control (RBAC) so allow outside accounts and contracts
 // to interact with it securely allowing for future extensibility.
 
-pragma solidity ^0.7.3;
+pragma solidity ^0.8.0;
 
 import "./TokenInterface.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/AccessControl.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/utils/SafeERC20.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol";
 
 contract Staking is AccessControl {
 
@@ -24,7 +24,7 @@ contract Staking is AccessControl {
     TokenInterface private fundamenta;  
     
     /**
-     * @dev Smart Contract uses Role Based Access Control to 
+     * Smart Contract uses Role Based Access Control to 
      * 
      * alllow for secure access as well as enabling the ability 
      *
@@ -101,7 +101,7 @@ contract Staking is AccessControl {
     //--------Staking Functions-------------------
 
     /**
-     * @dev allows a user to create a staking positon. Users will
+     * allows a user to create a staking positon. Users will
      * 
      * not be allowed to stake more than the `stakeCap` which is 
      *
@@ -111,7 +111,6 @@ contract Staking is AccessControl {
      */
 
     function createStake(uint _stake) public pause stakeToggle {
-        lastWithdraw[msg.sender] = block.number;
         rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
         if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
@@ -123,7 +122,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev removes a users staked positon if the required lock
+     * removes a users staked positon if the required lock
      * 
      * window is satisfied. Also pays out any `_rewardsAccrued` to
      *
@@ -153,7 +152,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev returns the amount of rewards a user as accrued.
+     * returns the amount of rewards a user as accrued.
      */
     
     function rewardsAccrued() public view returns (uint) {
@@ -184,7 +183,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev allows user to withrdraw any pending rewards and
+     * allows user to withrdraw any pending rewards and
      * 
      * staking position if `emergencyWDoff` is false enabling 
      * 
@@ -202,7 +201,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev returns a users `lastWithdraw` which is the last block
+     * returns a users `lastWithdraw` which is the last block
      * 
      * height that the user last withdrew rewards.
      */
@@ -212,7 +211,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev returns to the user the amount of blocks that they must
+     * returns to the user the amount of blocks that they must
      * 
      * have their stake locked before they are able to unstake their
      * 
@@ -226,7 +225,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev allows admin with the `_STAKING` role to set the 
+     * allows admin with the `_STAKING` role to set the 
      * 
      * `stakeMultiplier` which is used in the calculation that
      *
@@ -241,7 +240,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev returns a users staked position.
+     * returns a users staked position.
      */
     
     function stakeOf (address _stakeholder) public view returns(uint) {
@@ -249,7 +248,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev returns the total amount of FMTA that has been 
+     * returns the total amount of FMTA that has been 
      * 
      * placed in staking postions by users.
      */
@@ -264,7 +263,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev returns if an account is a stakeholder and holds
+     * returns if an account is a stakeholder and holds
      * 
      * a staked position.
      */
@@ -278,7 +277,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev internal function that adds accounts as stakeholders.
+     * internal function that adds accounts as stakeholders.
      */
     
     function addStakeholder(address _stakeholder) internal pause stakeToggle {
@@ -287,7 +286,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev internal function that removes accounts as stakeholders.
+     * internal function that removes accounts as stakeholders.
      */
     
     function removeStakeholder(address _stakeholder) internal {
@@ -299,7 +298,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev returns an accounts total rewards paid over the
+     * returns an accounts total rewards paid over the
      * 
      * Staking Contracts lifetime.
      */
@@ -309,7 +308,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev returns the amount of total rewards paid to all
+     * returns the amount of total rewards paid to all
      * 
      * accounts over the Staking Contracts lifetime.
      */
@@ -324,7 +323,7 @@ contract Staking is AccessControl {
     }
     
      /**
-     * @dev allows admin with the `_STAKING` role to set the
+     * allows admin with the `_STAKING` role to set the
      * 
      * Staking Contracts `stakeCalc` which is the divisor used
      * 
@@ -339,7 +338,7 @@ contract Staking is AccessControl {
     }
     
      /**
-     * @dev allows admin with the `_STAKING` role to set the
+     * allows admin with the `_STAKING` role to set the
      * 
      * Staking Contracts `stakeCap` which determines how many
      * 
@@ -352,7 +351,7 @@ contract Staking is AccessControl {
     }
     
      /**
-     * @dev allows admin with the `_STAKING` role to set the
+     * allows admin with the `_STAKING` role to set the
      * 
      * Staking Contracts `stakeOff` bool to true ot false 
      * 
@@ -367,7 +366,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev allows admin with the `_STAKING` role to set the
+     * allows admin with the `_STAKING` role to set the
      * 
      * Staking Contracts `rewardsWindow` which determines how
      * 
@@ -384,7 +383,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev simple function help track and calculate the rewards
+     * simple function help track and calculate the rewards
      * 
      * accrued between rewards windows. it uses `stakeCalc` which
      * 
@@ -396,7 +395,7 @@ contract Staking is AccessControl {
     }
     
     /**
-     * @dev turns on the emergencyWD function which is used for 
+     * turns on the emergencyWD function which is used for 
      * 
      * when the staking contract is paused or stopped for some
      * 
@@ -412,7 +411,7 @@ contract Staking is AccessControl {
     //----------Pause----------------------
 
     /**
-     * @dev pauses the Smart Contract.
+     * pauses the Smart Contract.
      */
 
     function setPaused(bool _paused) external {
