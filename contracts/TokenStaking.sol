@@ -182,17 +182,14 @@ contract Staking is AccessControl {
         }
     }
     
+    
     function compoundRewards() public pause stakeToggle {
-         rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
-        if(lastWithdraw[msg.sender] == 0) {
-           revert("TokenStaking: You cannot withdraw if you have never staked");
-        } else if (lastWithdraw[msg.sender] != 0){
-            require(block.number > lastWithdraw[msg.sender].add(rewardsWindow), "TokenStaking: It hasn't been enough time since your last withdrawl");
-            fundamenta.mintTo(msg.sender, rewardsAccrued());
-            lastWithdraw[msg.sender] = block.number;
-            emit RewardsWithdrawn(msg.sender, rewardsAccrued(), block.number);
-            createStake(rewardsAccrued());
-        }
+        rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
+        if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
+        stakes[msg.sender] = stakes[msg.sender].add(rewardsAccrued());
+        require(stakes[msg.sender] <= stakeCap, "TokenStaking: Can't Stake More than allowed moneybags"); 
+        lastWithdraw[msg.sender] = block.number;
+        emit StakeCreated(msg.sender, rewardsAccrued(), block.number);
     }
     
     /**
@@ -355,7 +352,7 @@ contract Staking is AccessControl {
      * 
      * Staking Contracts `stakeCap` which determines how many
      * 
-     * tokens total can be staked per accounfundamenta.
+     * tokens total can be staked per account.
      */
     
     function setStakeCap(uint _stakeCap) external pause stakeToggle {
