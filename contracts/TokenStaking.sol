@@ -182,6 +182,19 @@ contract Staking is AccessControl {
         }
     }
     
+    function compoundRewards() public pause stakeToggle {
+         rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
+        if(lastWithdraw[msg.sender] == 0) {
+           revert("TokenStaking: You cannot withdraw if you have never staked");
+        } else if (lastWithdraw[msg.sender] != 0){
+            require(block.number > lastWithdraw[msg.sender].add(rewardsWindow), "TokenStaking: It hasn't been enough time since your last withdrawl");
+            fundamenta.mintTo(msg.sender, rewardsAccrued());
+            lastWithdraw[msg.sender] = block.number;
+            emit RewardsWithdrawn(msg.sender, rewardsAccrued(), block.number);
+            createStake(rewardsAccrued());
+        }
+    }
+    
     /**
      * allows user to withrdraw any pending rewards and
      * 
