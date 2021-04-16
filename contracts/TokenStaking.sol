@@ -111,10 +111,10 @@ contract Staking is AccessControl {
      */
 
     function createStake(uint _stake) public pause stakeToggle {
+        require(rewardsAccrued() == 0);
         rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
         if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
-        fundamenta.mintTo(msg.sender, rewardsAccrued());
         fundamenta.burnFrom(msg.sender, _stake);
         require(stakes[msg.sender] <= stakeCap, "TokenStaking: Can't Stake More than allowed moneybags"); 
         lastWithdraw[msg.sender] = block.number;
@@ -136,18 +136,16 @@ contract Staking is AccessControl {
         if(stakes[msg.sender] == 0 && _stake != 0 ) {
             revert("TokenStaking: You don't have any tokens staked");
         }else if (stakes[msg.sender] != 0 && _stake != 0) {
-            fundamenta.mintTo(msg.sender, rewardsAccrued());
-            fundamenta.mintTo(msg.sender, _stake);
+            fundamenta.mintTo(msg.sender, rewardsAccrued().add(_stake));
             stakes[msg.sender] = stakes[msg.sender].sub(_stake);
             lastWithdraw[msg.sender] = block.number;
         }else if (stakes[msg.sender] == 0) {
-            fundamenta.mintTo(msg.sender, rewardsAccrued());
-            fundamenta.mintTo(msg.sender, _stake);
+            fundamenta.mintTo(msg.sender, rewardsAccrued().add(_stake));
             stakes[msg.sender] = stakes[msg.sender].sub(_stake);
             removeStakeholder(msg.sender);
             lastWithdraw[msg.sender] = block.number;
         }
-        emit StakeRemoved(msg.sender, _stake, rewardsAccrued(), block.number);
+        emit StakeRemoved(msg.sender, _stake, rewardsAccrued().add(_stake), block.number);
         
     }
     
@@ -156,16 +154,14 @@ contract Staking is AccessControl {
      */
     
     function rewardsAccrued() public view returns (uint) {
-        uint _rewardsAccrued;
-        uint multiplier;
-        multiplier = block.number.sub(lastWithdraw[msg.sender]).div(rewardsWindow);
-        _rewardsAccrued = calculateReward(msg.sender).mul(multiplier);
+        uint multiplier = block.number.sub(lastWithdraw[msg.sender]).div(rewardsWindow);
+        uint _rewardsAccrued = calculateReward(msg.sender).mul(multiplier);
         return _rewardsAccrued;
         
     }
     
     /**
-     * allows user to withrdraw any pending rewards as
+     * @dev allows user to withrdraw any pending rewards as
      * 
      * long as the `rewardsWindow` is satisfied.
      */
@@ -204,8 +200,7 @@ contract Staking is AccessControl {
     
     function emergencyWithdrawRewardAndStakes() public emergency {
         rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
-        fundamenta.mintTo(msg.sender, rewardsAccrued());
-        fundamenta.mintTo(msg.sender, stakes[msg.sender]);
+        fundamenta.mintTo(msg.sender, rewardsAccrued().add(stakes[msg.sender]));
         stakes[msg.sender] = stakes[msg.sender].sub(stakes[msg.sender]);
         removeStakeholder(msg.sender);
     }
