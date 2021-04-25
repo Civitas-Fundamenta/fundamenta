@@ -302,6 +302,10 @@ contract Staking is AccessControl {
         }
     }
     
+    function getStakeholders() public view returns (uint _numOfStakeholders){
+        return stakeholders.length;
+    }
+    
     /**
      * returns an accounts total rewards paid over the
      * 
