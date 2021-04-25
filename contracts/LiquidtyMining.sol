@@ -76,7 +76,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
     
     /**
-     * struct to keep track of liquidty pools, total
+     * struct to keep track of liquidity pools, total
      * rewards paid and total value locked in said pools.
      */
     
@@ -174,7 +174,7 @@ contract LiquidityMining is Ownable, AccessControl {
     //------------Token Functions----------------------
     
     /**
-     * functions to add and remove Liquidty Pool pairs to allow users to
+     * functions to add and remove liquidity Pool pairs to allow users to
      * stake the pools LP Tokens towards earnign rewards. Can only
      * be called by accounts with the `_ADMIN` role and should only 
      * be added once. The index at which the pool pair is stored 
@@ -183,7 +183,7 @@ contract LiquidityMining is Ownable, AccessControl {
      * zero value if called.
      */
     
-    function addLiquidtyPoolToken(
+    function addLiquidity PoolToken(
         IERC20 _lpTokenAddress, 
         uint _bonus, 
         uint _lpbp0, 
@@ -211,7 +211,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
 
     
-    function removeLiquidtyPoolToken(uint _pid) public {
+    function removeLiquidity PoolToken(uint _pid) public {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
         delete poolInfo[_pid];
         
