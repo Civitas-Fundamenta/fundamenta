@@ -183,7 +183,7 @@ contract LiquidityMining is Ownable, AccessControl {
      * zero value if called.
      */
     
-    function addLiquidity PoolToken(
+    function addLiquidityPoolToken(
         IERC20 _lpTokenAddress, 
         uint _bonus, 
         uint _lpbp0, 
@@ -211,7 +211,7 @@ contract LiquidityMining is Ownable, AccessControl {
     }
 
     
-    function removeLiquidity PoolToken(uint _pid) public {
+    function removeLiquidityPoolToken(uint _pid) public {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
         delete poolInfo[_pid];
         
