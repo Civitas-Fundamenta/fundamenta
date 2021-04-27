@@ -4,9 +4,7 @@
 // https://github.com/Civitas-Fundamenta
 // mhooft@fundamenta.network
 
-// This is Civitas Fundamenta's implementation of the Fundamenta Token for Binance Smart Chain.
-// Supply cap will be shared with all other FMTA contracts on all other networks.
-// Currenntly this is handled manually but will be automated in the future.
+// Civitas Fundamenta's BSC implementation of the Fundamenta Token.
 
 pragma solidity ^0.7.3;
 
@@ -65,7 +63,7 @@ contract FMTAToken is ERC20, AccessControl {
     //------Token/Admin Constructor---------
     
     constructor() ERC20("Fundamenta", "FMTA") {
-        _cap = 5e23;
+        _cap = 2.5e25;
         mintDisabled = true;
         mintToDisabled = false;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);

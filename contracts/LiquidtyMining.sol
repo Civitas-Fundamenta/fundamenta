@@ -33,12 +33,6 @@ contract LiquidityMining is Ownable, AccessControl {
     bool public addDisabled;
     bool public removePositionOnly;
     
-    /**
-     * variables to define three seperate lockPeriod's.
-     * Each period uses different multipliers and basis points 
-     * to calculate Liquidity Miners daily yield.
-     */
-    
     uint private lockPeriod0;
     uint private lockPeriod1;
     uint private lockPeriod2;
@@ -450,27 +444,27 @@ contract LiquidityMining is Ownable, AccessControl {
      * the entire position.
      */
     
-    function removePosition(uint _lpTokenAmount, uint _pid) external unpaused {
+    function removePosition(uint _pid) external unpaused {
         LiquidityProviders storage p = provider[_pid][msg.sender];
         PoolInfo storage pool = poolInfo[_pid];
-        require(_lpTokenAmount == p.LockedAmount, "LiquidyMining: Either you do not have a position or you must remove the entire amount.");
+        //require(_lpTokenAmount == p.LockedAmount, "LiquidyMining: Either you do not have a position or you must remove the entire amount.");
         require(p.UnlockHeight < block.number, "LiquidityMining: Not Long Enough");
-            pool.ContractAddress.safeTransfer(msg.sender, _lpTokenAmount);
+            pool.ContractAddress.safeTransfer(msg.sender, p.LockedAmount);
             uint yield = calculateUserDailyYield(_pid);
             fundamenta.mintTo(msg.sender, yield);
             provider[_pid][msg.sender] = LiquidityProviders (
                 msg.sender, 
                 0, 
-                p.LockedAmount.sub(_lpTokenAmount),
+                p.LockedAmount.sub(p.LockedAmount),
                 0, 
                 0,
                 p.TotalRewardsPaid.add(yield)
             );
         pool.TotalRewardsPaidByPool = pool.TotalRewardsPaidByPool.add(yield);
-        pool.TotalLPTokensLocked = pool.TotalLPTokensLocked.sub(_lpTokenAmount);
+        pool.TotalLPTokensLocked = pool.TotalLPTokensLocked.sub(p.LockedAmount);
         emit PositionRemoved(
         msg.sender,
-        _lpTokenAmount,
+        p.LockedAmount,
         block.number
       );
     }
