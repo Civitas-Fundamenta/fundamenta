@@ -133,10 +133,12 @@ contract Staking is AccessControl {
         uint unlockWindow = rewardsWindow.mul(stakeLockMultiplier);
         require(block.number >= lastWithdraw[msg.sender].add(unlockWindow), "TokenStaking: FMTA has not been staked for long enough");
         rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
+        uint totalAccrued;
         if(stakes[msg.sender] == 0 && _stake != 0 ) {
             revert("TokenStaking: You don't have any tokens staked");
         }else if (stakes[msg.sender] != 0 && _stake != 0) {
-            fundamenta.mintTo(msg.sender, rewardsAccrued().add(_stake));
+            totalAccrued = rewardsAccrued().add(_stake);
+            fundamenta.mintTo(msg.sender, totalAccrued);
             stakes[msg.sender] = stakes[msg.sender].sub(_stake);
             lastWithdraw[msg.sender] = block.number;
         }
@@ -144,7 +146,7 @@ contract Staking is AccessControl {
         if (stakes[msg.sender] == 0) {
             removeStakeholder(msg.sender);
         }
-        emit StakeRemoved(msg.sender, _stake, rewardsAccrued().add(_stake), block.number);
+        emit StakeRemoved(msg.sender, _stake, totalAccrued, block.number);
     }
     
     /**
@@ -303,6 +305,10 @@ contract Staking is AccessControl {
     function getStakeholders() public view returns (uint _numOfStakeholders){
         return stakeholders.length;
     }
+    
+    function getByIndex(uint i) public view returns (address) {
+    return stakeholders[i];
+}
     
     /**
      * returns an accounts total rewards paid over the
