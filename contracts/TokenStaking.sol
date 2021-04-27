@@ -139,14 +139,12 @@ contract Staking is AccessControl {
             fundamenta.mintTo(msg.sender, rewardsAccrued().add(_stake));
             stakes[msg.sender] = stakes[msg.sender].sub(_stake);
             lastWithdraw[msg.sender] = block.number;
-        }else if (stakes[msg.sender] == 0) {
-            fundamenta.mintTo(msg.sender, rewardsAccrued().add(_stake));
-            stakes[msg.sender] = stakes[msg.sender].sub(_stake);
+        }
+        
+        if (stakes[msg.sender] == 0) {
             removeStakeholder(msg.sender);
-            lastWithdraw[msg.sender] = block.number;
         }
         emit StakeRemoved(msg.sender, _stake, rewardsAccrued().add(_stake), block.number);
-        
     }
     
     /**
