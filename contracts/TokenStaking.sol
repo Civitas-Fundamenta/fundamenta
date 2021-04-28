@@ -57,6 +57,7 @@ contract Staking is AccessControl {
     //----------Events----------------------
     
     event StakeCreated(address _stakeholder, uint _stakes, uint _blockHeight);
+    event rewardsCompunded(address _stakeholder, uint _rewardsAdded, uint _blockHeight);
     event StakeRemoved(address _stakeholder, uint _stakes, uint rewards, uint _blockHeight);
     event RewardsWithdrawn(address _stakeholder, uint _rewards, uint blockHeight);
     event TokensRescued (address _pebcak, address _ERC20, uint _ERC20Amount, uint _blockHeightRescued);
@@ -185,7 +186,7 @@ contract Staking is AccessControl {
         stakes[msg.sender] = stakes[msg.sender].add(rewardsAccrued());
         require(stakes[msg.sender] <= stakeCap, "TokenStaking: Can't Stake More than allowed moneybags"); 
         lastWithdraw[msg.sender] = block.number;
-        emit StakeCreated(msg.sender, rewardsAccrued(), block.number);
+        emit rewardsCompunded(msg.sender, rewardsAccrued(), block.number);
     }
     
     /**
