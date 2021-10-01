@@ -4,30 +4,19 @@
 // https://github.com/Civitas-Fundamenta
 // mhooft@fundamenta.network
 
-// This is Civitas Fundamenta's implementation of the Fundamenta Token for xDAI Chain.
-// Supply cap will be shared with all other FMTA contracts on all other networks.
-// Currenntly this is handled manually but will be automated in the future.
-
-pragma solidity ^0.7.3;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/GSN/Context.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
 
 contract FMTAToken is ERC20, AccessControl {
     
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
-    
-    /**
-     * @dev Token uses Role Based Access Control to 
-     * alllow for secure access as well as enabling the ability 
-     * for other contracts such as oracles and supply mechanisms
-     * to interact with it.
-     */
     
    //------RBAC Vars--------------
    
@@ -70,12 +59,6 @@ contract FMTAToken is ERC20, AccessControl {
         mintToDisabled = false;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
-    
-    /**
-     * @dev functions used to toggle contract states.
-     * Includes disabling or enabling minting and 
-     * pausing of the contract
-     */
 
     //--------Toggle Functions----------------
     
@@ -128,13 +111,6 @@ contract FMTAToken is ERC20, AccessControl {
     
     //------Token Functions-----------------
     
-    
-    /**
-     * @dev token funtions require role based access to 
-     * execute.  This gives us the ability to allow outside 
-     * interaction with the token contract securely.
-     */
-    
     function mintTo(address _to, uint _amount) external pause mintToDis{
         require(hasRole(_MINTTO, msg.sender),"Fundamenta: Message Sender must be _MINTTO");
         _mint(_to, _amount);
@@ -160,13 +136,6 @@ contract FMTAToken is ERC20, AccessControl {
     }
 
     //----------Supply Cap------------------
-    
-    
-    /**
-     * @dev tokens supply cap is configureable and also 
-     * leverages RBAC to allow outside mechanisms like  
-     * oracles to interact with it securely.
-     */
 
     function setSupplyCap(uint _supplyCap) external pause {
         require(hasRole(_SUPPLY, msg.sender));
