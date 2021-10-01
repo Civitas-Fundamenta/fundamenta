@@ -14,11 +14,11 @@
 // of token movement.  This is a comprimise to allow recovery of tokens/ether 
 // that are sent to the contract by mistake.
 
-pragma solidity ^0.7.3;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/utils/SafeERC20.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/AccessControl.sol";
 
 contract Vesting is AccessControl {
     
@@ -33,28 +33,31 @@ contract Vesting is AccessControl {
     
     //---------Interface-----------
     
-    IERC20  private token;
+    IERC20 private token;
+    
+    uint public periodLength;
     
     //------structs/mappings-------
     
     /**
-     * @dev struct to keep track of beneficiaries
+     * struct to keep track of beneficiaries
      * release times and balances.
      */
     
     struct Beneficiaries {
         address beneficiary;
-        uint ReleaseTime;
-        uint LockedAmount;
+        uint releaseTime;
+        uint lockedAmount;
+        uint releasedPerPeriod;
+        uint totalAmountReleased;
     }
     
     mapping (address => Beneficiaries) beneficiary;
     
     //-----------Events--------------
     
-    event beneficiaryAdded (address _beneficiary, uint _ReleaseTime, uint _LockedAmount, uint _blockHeight);
-    event beneficiaryWithdraw (address _beneficiary, uint _WithdrawnAmount, uint _blockHeight);
-    event releaseTimeIncreased (address _beneficiary, uint _newReleaseTime, uint _blockHeight);
+    event beneficiaryAdded (address _beneficiary, uint _releaseTime, uint _LockedAmount, uint _blockHeight);
+    event beneficiaryWithdraw (address _beneficiary, uint _withdrawnAmount, uint _blockHeight, uint _nextUnlock);
     event beneficiaryChanged (address _currentBeneficiary, address _newBeneficiary, uint _blockHeight);
     event tokensRescued (address _pebcak, address _tokenContract, uint _amountRescued, uint _blockHeight);
 
@@ -62,6 +65,7 @@ contract Vesting is AccessControl {
 
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        periodLength = 2592000; // Set initial period length (30 Days in seconds)
     }
     
     //------contract functions-------
@@ -71,74 +75,69 @@ contract Vesting is AccessControl {
         token = _token;
     }
     
+    function setPeriodLength(uint _periodLength) public {
+        require(hasRole(_ADMIN, msg.sender));
+        periodLength = _periodLength;
+    }
+    
     /**
-     * @dev adds beneficiary
+     * adds beneficiary
      */
     
-    function addbeneficary(address _beneficiary, uint _ReleaseTime, uint _LockedAmount) public {
+    function addbeneficary(address _beneficiary, uint _ReleaseTime, uint _LockedAmount, uint _releasedPerPeriod) public {
          Beneficiaries storage b = beneficiary[_beneficiary];
          require(hasRole(_ADMIN, msg.sender));
-         require(b.LockedAmount == 0);
-         beneficiary[_beneficiary] = Beneficiaries(_beneficiary, _ReleaseTime, _LockedAmount);
+         require(b.lockedAmount == 0);
+         beneficiary[_beneficiary] = Beneficiaries(_beneficiary, _ReleaseTime, _LockedAmount, _releasedPerPeriod, 0);
          emit beneficiaryAdded (_beneficiary, _ReleaseTime, _LockedAmount, block.number);
     }
     
     /**
-     * @dev returns if msg.sender is a beneficiary and if so 
+     * returns if msg.sender is a beneficiary and if so 
      * returns beneficiary information
      */
     
     /**
-     * @dev check if a user is a beneficiary and if so 
+     * check if a user is a beneficiary and if so 
      * return beneficiary information
      */
     
     function isBeneficiary(address _beneficiaryAddress) external view returns (address _beneficiary, uint _ReleaseTime, uint _LockedAmount, uint _timeRemainingInSeconds)  {
         Beneficiaries memory b = beneficiary[_beneficiaryAddress];
-         if(b.ReleaseTime > block.timestamp) {
-            uint timeRemaining = b.ReleaseTime.sub(block.timestamp);
-            return (b.beneficiary, b.ReleaseTime, b.LockedAmount, timeRemaining);
-        } else if(b.ReleaseTime < block.timestamp) {
+         if(b.releaseTime > block.timestamp) {
+            uint timeRemaining = b.releaseTime.sub(block.timestamp);
+            return (b.beneficiary, b.releaseTime, b.lockedAmount, timeRemaining);
+        } else if(b.releaseTime < block.timestamp) {
             uint timeRemaining = 0;
-            return (b.beneficiary, b.ReleaseTime, b.LockedAmount, timeRemaining);
+            return (b.beneficiary, b.releaseTime, b.lockedAmount, timeRemaining);
     
         }    
     }
     
     /**
-     * @dev allows Beneficiaries to wthdraw vested tokens
+     * allows Beneficiaries to wthdraw vested tokens
      * if the release time is satisfied.
      */
     
     function withdrawVesting() external {
         Beneficiaries storage b = beneficiary[msg.sender];
-        if (b.LockedAmount == 0)
+        if (b.lockedAmount == 0) {
         revert ("You are not a beneficiary or do not have any tokens vesting");
-        else if(b.ReleaseTime > block.timestamp) 
+        } else if(b.releaseTime > block.timestamp) { 
         revert("It isn't time yet speedracer...");
-        else if (b.ReleaseTime < block.timestamp)
-        require(contractBalance() >= b.LockedAmount, "Not enough tokens in contract balance to cover withdrawl");
-        token.safeTransfer(b.beneficiary, b.LockedAmount);
-        emit beneficiaryWithdraw (b.beneficiary, b.LockedAmount, block.number);
-        beneficiary[msg.sender] = Beneficiaries(address(0), 0, 0);
+        } else if (b.releaseTime < block.timestamp && b.releasedPerPeriod <= b.lockedAmount) {
+        token.safeTransfer(b.beneficiary, b.releasedPerPeriod);
+        emit beneficiaryWithdraw (b.beneficiary, b.releasedPerPeriod, block.number, block.timestamp.add(periodLength));
+        beneficiary[msg.sender] = Beneficiaries(b.beneficiary, block.timestamp.add(periodLength), b.lockedAmount.sub(b.releasedPerPeriod), b.releasedPerPeriod, b.totalAmountReleased.add(b.releasedPerPeriod));
+        }else if (b.releaseTime < block.timestamp && b.lockedAmount < b.releasedPerPeriod) {
+        token.safeTransfer(b.beneficiary, b.lockedAmount);
+        emit beneficiaryWithdraw (b.beneficiary, b.lockedAmount, block.number, block.timestamp.add(periodLength));
+        beneficiary[msg.sender] = Beneficiaries(b.beneficiary, block.timestamp.add(periodLength), 0, b.releasedPerPeriod, b.totalAmountReleased.add(b.releasedPerPeriod));
+        }
     }
     
     /**
-     * @dev flexibility is nice so we will allow the ability
-     * for beneficiaries to increase vesting time. You cannot
-     * decrease however.
-     */
-    
-    function increaseReleaseTime(uint _newReleaseTime, address _beneficiary) public {
-        require(hasRole(_ADMIN, msg.sender));
-        Beneficiaries storage b = beneficiary[_beneficiary];
-        require(_newReleaseTime > block.timestamp && _newReleaseTime > b.ReleaseTime, "Release time can only be increased");
-        b.ReleaseTime = _newReleaseTime;
-        emit releaseTimeIncreased (_beneficiary, _newReleaseTime, block.number);
-    }
-    
-    /**
-     * @dev emergency function to change beneficiary addresses if 
+     * emergency function to change beneficiary addresses if 
      * they pull a bozo and lose or compromise keys before the release
      * time has been reached.
      */
@@ -151,7 +150,7 @@ contract Vesting is AccessControl {
     }
     
     /**
-     * @dev returns contract balance
+     * returns contract balance
      */
     
     function contractBalance() public view returns (uint _balance) {
@@ -161,7 +160,7 @@ contract Vesting is AccessControl {
     //-----------Rescue--------------
     
     /**
-     * @dev emergency functions to transfer Ether and ERC20 tokens that 
+     * emergency functions to transfer Ether and ERC20 tokens that 
      * are mistakenly sent to the contract.
      */
 
