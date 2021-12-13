@@ -79,6 +79,7 @@ contract LiquidityMining is Ownable, AccessControl {
         uint TotalRewardsPaidByPool;
         uint TotalLPTokensLocked;
         uint PoolBonus;
+        uint RewardsPool;
         uint lockPeriod0BasisPoint;
         uint lockPeriod1BasisPoint;
         uint lockPeriod2BasisPoint;
@@ -179,7 +180,8 @@ contract LiquidityMining is Ownable, AccessControl {
     
     function addLiquidityPoolToken(
         IERC20 _lpTokenAddress, 
-        uint _bonus, 
+        uint _bonus,
+        uint _rewardsPool, 
         uint _lpbp0, 
         uint _lpbp1, 
         uint _lpbp2, 
@@ -192,6 +194,7 @@ contract LiquidityMining is Ownable, AccessControl {
             ContractAddress: _lpTokenAddress,
             TotalRewardsPaidByPool: 0,
             TotalLPTokensLocked: 0,
+            RewardsPool: _rewardsPool,
             PoolBonus: _bonus,
             lockPeriod0BasisPoint: _lpbp0,
             lockPeriod1BasisPoint: _lpbp1,
