@@ -17,8 +17,6 @@ contract LiquidityMining is Ownable, AccessControl {
     
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-    
-    //IERC20 private fundamenta;
 
     
     //-------RBAC---------------------------
