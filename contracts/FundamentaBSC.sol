@@ -15,7 +15,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
-contract FundamentaToken is ERC20, SecureContract {
+contract FundamentaTokenBSC is ERC20, SecureContract {
     
     using SafeERC20 for IERC20;
     using SafeMath for uint256;

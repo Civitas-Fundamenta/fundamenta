@@ -450,11 +450,11 @@
 			]
 		},
 		"contracts/include/SecureContract.sol": {
-			"keccak256": "0x3b191c57f615d2fc4444efca9bf03b997202f8edec2f4f4d2e46272453451d8a",
+			"keccak256": "0x8c7d7a27ef54f037acec80297d90d5497b5e0b867019eb4008d89bcce4abd61d",
 			"license": "BSD-3-Clause",
 			"urls": [
-				"bzz-raw://04af732fe2b05ee8c79990dda9691ed714aff5cc98f019006e1dd3d534f6845f",
-				"dweb:/ipfs/QmWwfvUGSS9egrkK8AixJEaghxqHNno8cr8KHsqoCAMAQP"
+				"bzz-raw://202510eeabb1cf0c2289245ecd3d78883507fc9d721b0246f06a1928f7351eb7",
+				"dweb:/ipfs/QmdrL7ZkZhTg2QfpFTUyKRmE9uCqFy1ngDuMZL2JTRujug"
 			]
 		}
 	},

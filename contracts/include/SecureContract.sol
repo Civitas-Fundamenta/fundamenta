@@ -43,7 +43,7 @@ abstract contract SecureContract is AccessControl, Initializable
     {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(_ADMIN, msg.sender);
-        paused_ = true;
+        paused_ = false;
         owner_ = msg.sender;
     }
 

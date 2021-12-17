@@ -61,8 +61,8 @@ contract FundamentaToken is ERC20, SecureContract {
         _team = 5e24;
         _originalLiquidityProviders = 3.6e24;
         _cap = 1e26;
-        mintDisabled = true;
-        mintToDisabled = true;
+        mintDisabled = false;
+        mintToDisabled = false;
         SecureContract.init();
 
         _setRoleAdmin(_MINTTO, _ADMIN);

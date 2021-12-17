@@ -25,7 +25,7 @@ function test() {
         exit
     fi
 
-    truffle test --network development ${dir}/tests/$1.js #--show-events
+    truffle test --network development ${dir}/tests/$1.js --show-events
 
     exit
 }
