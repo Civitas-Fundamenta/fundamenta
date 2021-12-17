@@ -67,8 +67,6 @@ contract FundamentaToken is ERC20, SecureContract {
 
         _setRoleAdmin(_MINTTO, _ADMIN);
         _setRoleAdmin(_BURNFROM, _ADMIN);
-        _setupRole(_MINTTO, msg.sender);
-        _setupRole(_BURNFROM, msg.sender);
     }
     
 

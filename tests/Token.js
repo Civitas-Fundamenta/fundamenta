@@ -8,13 +8,18 @@ contract('Test', () => {
     var deployed;
 
     before(async function () {
-
         var contract = artifacts.require('FundamentaToken');
 
         deployed = await contract.new();
     });
-
+    
+    
     it('Check Balance', async function () {
+        //grant the master address the mintTo role. roles are defined in ../lib/roles.js
+        await deployed.grantRole(role.mintTo, master.address, { from: master.address });
+
+        //This token contract can't mint while paused. So unpause it
+        await deployed.setPaused(false, { from: master.address });
         
         //mint some tokens to account1
         await deployed.mintTo(account1.address, helpers.toAtomicUnits(10000), { from: master.address });
