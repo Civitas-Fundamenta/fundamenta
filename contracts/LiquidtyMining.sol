@@ -7,13 +7,12 @@
 pragma solidity ^0.8.0;
 
 import "./TokenInterface.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./include/SecureContract.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract LiquidityMining is Ownable, AccessControl {
+contract LiquidityMining is SecureContract {
     
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -23,7 +22,6 @@ contract LiquidityMining is Ownable, AccessControl {
     
     //-------RBAC---------------------------
 
-    bytes32 public constant _ADMIN = keccak256("_ADMIN");
     bytes32 public constant _REMOVAL = keccak256("_REMOVAL");
     bytes32 public constant _MOVE = keccak256("_MOVE");
     bytes32 public constant _RESCUE = keccak256("_RESCUE");
@@ -130,6 +128,7 @@ contract LiquidityMining is Ownable, AccessControl {
         lockPeriod1 = 10;
         lockPeriod2 = 15;
         removePositionOnly = false;
+        SecureContract.init();
         _setupRole(_ADMIN, msg.sender);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender); //God Mode. DEFAULT_ADMIN_ROLE Must Require _ADMIN ROLE Still to execute _ADMIN functions.
     }
@@ -153,11 +152,6 @@ contract LiquidityMining is Ownable, AccessControl {
     
     //----------Modifier Functions----------------------
 
-    function setPaused(bool _paused) external {
-        require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
-        paused = _paused;
-    }
-    
     function setRemovePosOnly(bool _removeOnly) external {
         require(hasRole(_ADMIN, msg.sender),"LiquidityMining: Message Sender must be _ADMIN");
         removePositionOnly = _removeOnly;
