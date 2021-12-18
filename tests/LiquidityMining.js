@@ -11,20 +11,22 @@ contract('LiquidityMiningTest', () => {
 
         liquidityMining = await deploy.liquidityMining();
 
+    });
+
+    it('Check Balance', async function () {
+        //grant the master address the mintTo role. roles are defined in ../lib/roles.js
+        await fmtaToken.grantRole(role.mintTo, master.address, { from: master.address });
+
         //This token contract can't mint while paused. So unpause it
         await fmtaToken.setPaused(false, { from: master.address });
         
-        await fmtaToken.grantRole(role.mintTo, master.address, { from: master.address });
-
+        //mint some tokens to account1
         await fmtaToken.mintTo(account1.address, helpers.toAtomicUnits(10000), { from: master.address });
 
         //get the balance of account1
-        var balance = await fmtaToken.balanceOf(account1.address);
+        var balance = await deployed.balanceOf(account1.address);
 
         //fromAtomicUnits is a BigDecimal. use .value to get a nicely formatted value
         console.log("Balance:", helpers.fromAtomicUnits(balance).value)
-
-
     });
-
 });
