@@ -129,8 +129,6 @@ contract LiquidityMining is SecureContract {
         lockPeriod2 = 15;
         removePositionOnly = false;
         SecureContract.init();
-        _setupRole(_ADMIN, msg.sender);
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender); //God Mode. DEFAULT_ADMIN_ROLE Must Require _ADMIN ROLE Still to execute _ADMIN functions.
     }
      
      //------------State modifiers---------------------
