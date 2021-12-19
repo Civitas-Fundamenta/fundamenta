@@ -6,14 +6,13 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./include/SecureContract.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
-contract FMTATokenXDAI is ERC20, AccessControl {
+contract FMTATokenXDAI is ERC20, SecureContract{
     
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -25,7 +24,6 @@ contract FMTATokenXDAI is ERC20, AccessControl {
     bytes32 public constant _BURN = keccak256("_BURN");
     bytes32 public constant _BURNFROM = keccak256("_BURNFROM");
     bytes32 public constant _SUPPLY = keccak256("_SUPPLY");
-    bytes32 public constant _ADMIN = keccak256("_ADMIN");
    
    //------Token Variables------------------
    
@@ -44,8 +42,6 @@ contract FMTATokenXDAI is ERC20, AccessControl {
     event TokensBurned (uint _amount, address _burner);
     event TokensBurnedFrom (address _from, uint _amount, address _burner);
     event SupplyCapChanged (uint _newCap, address _changedBy);
-    event ContractPaused (uint _blockHeight, address _pausedBy);
-    event ContractUnpaused (uint _blockHeight, address _unpausedBy);
     event MintingEnabled (uint _blockHeight, address _enabledBy);
     event MintingDisabled (uint _blockHeight, address _disabledBy);
     event MintingToEnabled (uint _blockHeight, address _enabledBy);
@@ -57,20 +53,12 @@ contract FMTATokenXDAI is ERC20, AccessControl {
         _cap = 5e23;
         mintDisabled = true;
         mintToDisabled = false;
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        SecureContract.init();
+        _setRoleAdmin(_MINTTO, _ADMIN);
+        _setRoleAdmin(_BURNFROM, _ADMIN);
     }
 
     //--------Toggle Functions----------------
-    
-    function setPaused(bool _paused) external {
-        require(hasRole(_ADMIN, msg.sender),"Fundamenta: Message Sender must be _ADMIN");
-        paused = _paused;
-        if (_paused == true) {
-            emit ContractPaused (block.number, msg.sender);
-        } else if (_paused == false) {
-            emit ContractUnpaused (block.number, msg.sender);
-        }
-    }
     
     function disableMint(bool _disableMinting) external {
         require(hasRole(_ADMIN, msg.sender),"Fundamenta: Message Sender must be _ADMIN");
@@ -93,11 +81,6 @@ contract FMTATokenXDAI is ERC20, AccessControl {
     }
 
     //------Toggle Modifiers------------------
-    
-    modifier pause() {
-        require(!paused, "Fundamenta: Contract is Paused");
-        _;
-    }
     
     modifier mintDis() {
         require(!mintDisabled, "Fundamenta: Minting is currently disabled");
