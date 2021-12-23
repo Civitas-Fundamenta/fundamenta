@@ -4,7 +4,7 @@ var deploy = require('../lib/deployment.js');
 var role = require("../lib/roles.js");
 
 contract('LiquidityMiningTest', () => {
-    let liquidityMining, fmtaToken;
+    let liquidityMining, fmtaToken, mockAsset; 
     
     before(async function () {
         //Not the real FMTA token

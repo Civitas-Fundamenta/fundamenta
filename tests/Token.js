@@ -20,6 +20,8 @@ contract('Test', () => {
 
         //This token contract can't mint while paused. So unpause it
         await deployed.setPaused(false, { from: master.address });
+
+        await deployed.disableMintTo(false, { from: master.address});
         
         //mint some tokens to account1
         await deployed.mintTo(account1.address, helpers.toAtomicUnits(10000), { from: master.address });

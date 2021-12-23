@@ -31,9 +31,6 @@ contract FundamentaToken is ERC20, SecureContract {
    //------Token Variables------------------
    
     uint private _cap;
-    uint public _fundingEmission;
-    uint public _team;
-    uint public _originalLiquidityProviders;
     
     //-------Toggle Variables---------------
     
@@ -56,9 +53,6 @@ contract FundamentaToken is ERC20, SecureContract {
     //------Token/Admin Constructor---------
     
     constructor() ERC20("Fundamenta", "FMTA") {
-        _fundingEmission = 1e25;
-        _team = 5e24;
-        _originalLiquidityProviders = 3.6e24;
         _cap = 1e26;
         mintDisabled = false;
         mintToDisabled = false;
