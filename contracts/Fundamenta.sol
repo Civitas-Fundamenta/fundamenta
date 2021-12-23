@@ -52,9 +52,9 @@ contract FundamentaToken is ERC20, SecureContract {
    
     //------Token/Admin Constructor---------
     
-    constructor() ERC20("Fundamenta", "FMTA") {
-        _cap = 1e26;
-        mintDisabled = false;
+    constructor(uint _cap) ERC20("Fundamenta", "FMTA") {
+        _cap = _cap;
+        mintDisabled = true;
         mintToDisabled = false;
         SecureContract.init();
         _setRoleAdmin(_MINTTO, _ADMIN);

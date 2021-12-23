@@ -65,12 +65,12 @@ contract Staking is AccessControl {
 
     //-------Constructor----------------------
 
-    constructor(){
-        stakingOff = true;
+    constructor(uint _stakeCalc, uint _stakeCap, uint _rewardsWindow){
+        stakingOff = false;
         emergencyWDoff = true;
-        stakeCalc = 500;
-        stakeCap = 3e22;
-        rewardsWindow = 6500;
+        stakeCalc = _stakeCalc;
+        stakeCap = _stakeCap;
+        rewardsWindow = _rewardsWindow;
         stakeLockMultiplier = 2;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
