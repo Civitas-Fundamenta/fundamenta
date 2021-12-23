@@ -30,7 +30,7 @@ contract FundamentaToken is ERC20, SecureContract {
    
    //------Token Variables------------------
    
-    uint private _cap;
+    uint private cap;
     
     //-------Toggle Variables---------------
     
@@ -53,7 +53,7 @@ contract FundamentaToken is ERC20, SecureContract {
     //------Token/Admin Constructor---------
     
     constructor(uint _cap) ERC20("Fundamenta", "FMTA") {
-        _cap = _cap;
+        cap = _cap;
         mintDisabled = true;
         mintToDisabled = false;
         SecureContract.init();
@@ -126,20 +126,20 @@ contract FundamentaToken is ERC20, SecureContract {
     
     function setSupplyCap(uint _supplyCap) external pause {
         require(hasRole(_SUPPLY, msg.sender));
-        _cap = _supplyCap;
-        require(totalSupply() < _cap, "nope");
+        cap = _supplyCap;
+        require(totalSupply() < cap, "nope");
         emit SupplyCapChanged (_supplyCap, msg.sender);
     }
     
     function supplyCap() public view returns (uint) {
-        return _cap;
+        return cap;
     }
     
     function _beforeTokenTransfer(address from, address to, uint amount) internal virtual override {
         super._beforeTokenTransfer(from, to, amount);
 
         if (from == address(0)) { 
-            require(totalSupply().add(amount) <= _cap, "Fundamenta: There is a Supply Cap dude. Come on...");
+            require(totalSupply().add(amount) <= cap, "Fundamenta: There is a Supply Cap dude. Come on...");
         }
     }
     
