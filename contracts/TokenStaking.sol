@@ -18,14 +18,6 @@ contract Staking is SecureContract {
     using SafeERC20 for IERC20;
     
     TokenInterface private fundamenta;  
-    
-    /**
-     * Smart Contract uses Role Based Access Control to 
-     * 
-     * alllow for secure access as well as enabling the ability 
-     *
-     * for other contracts such as oracles to interact with ifundamenta.
-     */
 
     //-------RBAC---------------------------
 
@@ -172,6 +164,9 @@ contract Staking is SecureContract {
         }
     }
     
+    /**
+     * allow user to add pending rewards to exisiting position 
+     */
     
     function compoundRewards() public pause stakeToggle {
         rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
