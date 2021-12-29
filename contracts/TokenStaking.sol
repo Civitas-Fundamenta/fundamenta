@@ -73,6 +73,7 @@ contract Staking is SecureContract {
         stakeLockMultiplier = 2;
         SecureContract.init();
         _setRoleAdmin(_STAKING, _ADMIN);
+        _setRoleAdmin(_RESCUE, _ADMIN);
     }
 
     //-------Set Token Address----------------
