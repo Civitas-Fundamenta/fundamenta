@@ -132,11 +132,6 @@ contract LiquidityMining is SecureContract {
     }
      
      //------------State modifiers---------------------
-     
-      modifier unpaused() {
-        require(!paused, "LiquidityMining: Contract is Paused");
-        _;
-    }
     
      modifier addPositionNotDisabled() {
         require(!addDisabled, "LiquidityMining: Adding a Position is currently disabled");
@@ -376,7 +371,7 @@ contract LiquidityMining is SecureContract {
      * only once per lock period.
      */
     
-    function addPosition(uint _lpTokenAmount, uint _lockPeriod, uint _pid) public addPositionNotDisabled unpaused{
+    function addPosition(uint _lpTokenAmount, uint _lockPeriod, uint _pid) public addPositionNotDisabled pause{
         LiquidityProviders storage p = provider[_pid][msg.sender];
         PoolInfo storage pool = poolInfo[_pid];
         address ca = address(this);
@@ -421,8 +416,6 @@ contract LiquidityMining is SecureContract {
           block.number
       );
     }
-
-    //function aP ()
     
     /**
      * allows a user to remove a liquidity staking position
@@ -430,10 +423,9 @@ contract LiquidityMining is SecureContract {
      * the entire position.
      */
     
-    function removePosition(uint _pid) external unpaused {
+    function removePosition(uint _pid) external pause {
         LiquidityProviders storage p = provider[_pid][msg.sender];
         PoolInfo storage pool = poolInfo[_pid];
-        //require(_lpTokenAmount == p.LockedAmount, "LiquidyMining: Either you do not have a position or you must remove the entire amount.");
         require(p.UnlockHeight < block.number, "LiquidityMining: Not Long Enough");
             pool.ContractAddress.safeTransfer(msg.sender, p.LockedAmount);
             fundamenta.safeTransfer(msg.sender, p.LockedAmount);
@@ -514,7 +506,7 @@ contract LiquidityMining is SecureContract {
      * DPY will no longer increase.
      */
     
-    function withdrawAccruedYieldAndAdd(uint _pid, uint _lpTokenAmount) public remPosOnly unpaused{
+    function withdrawAccruedYieldAndAdd(uint _pid, uint _lpTokenAmount) public remPosOnly pause{
         LiquidityProviders storage p = provider[_pid][msg.sender];
         PoolInfo storage pool = poolInfo[_pid];
         uint yield = calculateUserDailyYield(_pid);
@@ -598,8 +590,6 @@ contract LiquidityMining is SecureContract {
             }else revert("LiquidityMining: Incompatible Lock Period");
         }else revert("LiquidityMining: ?" );
     }
-
-    //function wdAY 
     
     //-------Movement Functions---------------------
 
