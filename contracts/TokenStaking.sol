@@ -11,12 +11,13 @@
 pragma solidity ^0.8.0;
 
 import "./TokenInterface.sol";
+import "./include/SecureContract.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract Staking is AccessControl {
+contract Staking is SecureContract {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -35,7 +36,6 @@ contract Staking is AccessControl {
 
     bytes32 public constant _STAKING = keccak256("_STAKING");
     bytes32 public constant _RESCUE = keccak256("_RESCUE");
-    bytes32 public constant _ADMIN = keccak256("_ADMIN");
 
     //-------Staking Vars-------------------
     
@@ -72,7 +72,8 @@ contract Staking is AccessControl {
         stakeCap = _stakeCap;
         rewardsWindow = _rewardsWindow;
         stakeLockMultiplier = 2;
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        SecureContract.init();
+        _setRoleAdmin(_STAKING, _ADMIN);
     }
 
     //-------Set Token Address----------------
@@ -84,10 +85,6 @@ contract Staking is AccessControl {
     
     //-------Modifiers--------------------------
 
-    modifier pause() {
-        require(!paused, "TokenStaking: Contract is Paused");
-        _;
-    }
 
     modifier stakeToggle() {
         require(!stakingOff, "TokenStaking: Staking is not currently active");
@@ -419,18 +416,6 @@ contract Staking is AccessControl {
     function setEmergencyWDoff(bool _emergencyWD) external {
         require(hasRole(_ADMIN, msg.sender));
         emergencyWDoff = _emergencyWD;
-    }
-    
-
-    //----------Pause----------------------
-
-    /**
-     * pauses the Smart Contract.
-     */
-
-    function setPaused(bool _paused) external {
-        require(hasRole(_ADMIN, msg.sender));
-        paused = _paused;
     }
     
     //----Emergency PEBCAK Functions-------
