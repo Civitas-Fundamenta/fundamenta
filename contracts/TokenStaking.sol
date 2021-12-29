@@ -3,10 +3,6 @@
 // https://github.com/Civitas-Fundamenta
 // mhooft@fundamenta.network
 
-// A simple token Staking Contract that uses a configurable `stakeCap` to limit inflation.
-// Employs the use of Role Based Access Control (RBAC) so allow outside accounts and contracts
-// to interact with it securely allowing for future extensibility.
-
 pragma solidity ^0.8.0;
 
 import "./TokenInterface.sol";
