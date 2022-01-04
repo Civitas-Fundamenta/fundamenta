@@ -96,7 +96,7 @@ contract Staking is SecureContract {
      */
 
     function createStake(uint _stake) public pause stakeToggle {
-        require(rewardsAccrued() == 0);
+        require(rewardsAccrued() == 0, "TokenStaking: Rewards must be withdrawn or compunded first");
         rewards[msg.sender] = rewards[msg.sender].add(rewardsAccrued());
         if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
@@ -211,9 +211,9 @@ contract Staking is SecureContract {
      * positon.
      */
     
-    function stakeUnlockWindow() external view returns (uint) {
+    function stakeUnlockWindow(address _user) external view returns (uint) {
         uint unlockWindow = rewardsWindow.mul(stakeLockMultiplier);
-        uint stakeWindow = lastWithdraw[msg.sender].add(unlockWindow);
+        uint stakeWindow = lastWithdraw[_user].add(unlockWindow);
         return stakeWindow;
     }
     
